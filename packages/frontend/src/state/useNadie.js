@@ -206,8 +206,8 @@ export function useNadie({ initialScreen = 'onboarding', seedDemo = false, llm }
   /* El usuario califica su día. Solo aquí se escribe el ánimo — la app nunca
      lo decide por él. Volver a calificar el mismo día pisa el valor anterior:
      el copy pregunta "¿cómo te sientes ahora?", así que vale la última. */
-  const rateToday = useCallback((value) => {
-    const next = upsertEntry(entriesRef.current, dateKey(), { value });
+  const rateToday = useCallback((score) => {
+    const next = upsertEntry(entriesRef.current, dateKey(), { score });
     setEntries(next);
     saveMoodLog(next);
     setRated(true);
@@ -234,7 +234,7 @@ export function useNadie({ initialScreen = 'onboarding', seedDemo = false, llm }
   const monthValues = useMemo(() => lastNDays(entries, VENTANA_DIAS), [entries]);
   const weekValues = useMemo(() => monthValues.slice(-7), [monthValues]);
   const todayEntry = entries[dateKey()];
-  const today = todayEntry ? todayEntry.value : null;
+  const today = todayEntry ? todayEntry.score : null;
   const todayNote = todayEntry && todayEntry.note ? todayEntry.note : '';
   const voice = VOICES.find((v) => v.id === voiceId) || VOICES[0];
 

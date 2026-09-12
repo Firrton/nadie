@@ -1,5 +1,11 @@
 import { moodTint } from './mood.js';
 
+/* Cuánto tiene que moverse el promedio entre quincenas para llamarlo tendencia.
+   Era 0.02 sobre un rango de 1 (2%). En la escala 1–10 el rango es 9 unidades,
+   así que el equivalente es 0.18; se redondea a 0.2 porque la precisión falsa
+   en un umbral elegido a ojo es peor que el número redondo. */
+const UMBRAL_TENDENCIA = 0.2;
+
 const MESES = ['ene', 'feb', 'mar', 'abr', 'may', 'jun', 'jul', 'ago', 'sep', 'oct', 'nov', 'dic'];
 const fmt = (d) => d.getDate() + ' ' + MESES[d.getMonth()];
 
@@ -36,9 +42,9 @@ export function buildJourney(values, today = new Date()) {
   const trend =
     a1 == null || a2 == null
       ? 'Todavía es pronto para ver patrones. Sigue hablando.'
-      : a2 > a1 + 0.02
+      : a2 > a1 + UMBRAL_TENDENCIA
         ? 'Las últimas dos semanas van más arriba que las dos anteriores.'
-        : a2 < a1 - 0.02
+        : a2 < a1 - UMBRAL_TENDENCIA
           ? 'Las últimas dos semanas vienen más abajo que las anteriores. Ahí está, sin drama.'
           : 'Tu ánimo se ha mantenido estable estas cuatro semanas.';
 

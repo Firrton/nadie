@@ -25,10 +25,17 @@ export const DEMO_REPLIES = [
 /* Ánimo de demo: 27 días previos a hoy. NO es el estado inicial de la app — un
    usuario nuevo arranca con el registro vacío y "Tu camino" ya tiene copy para
    eso. Solo se usa con useNadie({ seedDemo: true }), para revisar el diseño con
-   datos. */
+   datos.
+
+   Solo usa los cinco pasos de RATING_STEPS (1/3/5/7/9), y eso es una corrección,
+   no una limitación: el único camino que escribe ánimo es `rateToday`, así que un
+   mes real SIEMPRE es una escalera de cinco niveles. La serie anterior tenía
+   valores intermedios que ninguna persona podía producir, y dibujaba una curva
+   más suave que la que el usuario va a ver. Una demo que se ve mejor que el
+   producto es una demo que miente. */
 export const DEMO_MONTH = [
-  0.34, 0.4, null, 0.3, 0.42, 0.38, null, 0.45, 0.5, 0.4, null, 0.36, 0.52, 0.47,
-  null, 0.55, 0.48, null, 0.6, 0.52, 0.58, 0.5, null, 0.62, 0.55, 0.66, 0.6,
+  3, 3, null, 3, 5, 3, null, 5, 5, 3, null, 5, 5, 5,
+  null, 5, 7, null, 5, 7, 5, 7, null, 7, 7, 9, 7,
 ];
 
 export const CRISIS_LINE = 'México: Línea de la Vida, 800 911 2000 · España: línea 024';

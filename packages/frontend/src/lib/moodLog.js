@@ -5,7 +5,7 @@
 
    El registro es un mapa por fecha, no un array por posición:
 
-     { '2026-09-11': { value: 0.65, note: '…', at: '…' } }
+     { '2026-09-11': { score: 7, note: '…', at: '…' } }
 
    Tiene que ser por fecha. Un array posicional asume que el último elemento es
    hoy, y esa suposición se rompe apenas el usuario cierra la app y vuelve otro
@@ -34,7 +34,7 @@ export function lastNDays(entries, n, today = new Date()) {
     const d = new Date(today);
     d.setDate(d.getDate() - i);
     const entry = entries[dateKey(d)];
-    out.push(entry ? entry.value : null);
+    out.push(entry ? entry.score : null);
   }
   return out;
 }
@@ -53,11 +53,11 @@ export function upsertEntry(entries, key, patch) {
    array posicional de content.js en un registro con fechas reales. */
 export function entriesFromSeries(values, endDate = new Date()) {
   const entries = {};
-  values.forEach((value, i) => {
-    if (value == null) return;
+  values.forEach((score, i) => {
+    if (score == null) return;
     const d = new Date(endDate);
     d.setDate(d.getDate() - (values.length - 1 - i));
-    entries[dateKey(d)] = { value, at: d.toISOString() };
+    entries[dateKey(d)] = { score, at: d.toISOString() };
   });
   return entries;
 }

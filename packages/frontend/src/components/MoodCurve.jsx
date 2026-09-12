@@ -1,7 +1,8 @@
 import React from 'react';
+import { MOOD_MAX, MOOD_MIN } from '../lib/mood.js';
 
 export function MoodCurve({
-  values = [], width = 320, height = 80, min = 0, max = 1,
+  values = [], width = 320, height = 80, min = MOOD_MIN, max = MOOD_MAX,
   strokeWidth = 2, showDots = true, highlightLast = true,
   upColor = '#7FA4D4', downColor = '#D26A56', flatColor = 'var(--dot-inactive)',
   ariaLabel = 'Curva de ánimo', style, className,

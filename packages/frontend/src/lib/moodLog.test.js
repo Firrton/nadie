@@ -24,12 +24,12 @@ describe('lastNDays', () => {
   const hoy = new Date(2026, 8, 11, 12); // 11 sep 2026, mediodía local
 
   it('devuelve n valores y el último es hoy', () => {
-    const entries = { '2026-09-11': { value: 0.8 }, '2026-09-10': { value: 0.2 } };
+    const entries = { '2026-09-11': { score: 9 }, '2026-09-10': { score: 3 } };
     const out = lastNDays(entries, 28, hoy);
 
     expect(out).toHaveLength(28);
-    expect(out[27]).toBe(0.8);
-    expect(out[26]).toBe(0.2);
+    expect(out[27]).toBe(9);
+    expect(out[26]).toBe(3);
   });
 
   it('pone null en los días sin registro', () => {
@@ -38,50 +38,50 @@ describe('lastNDays', () => {
 
   it('cruza el fin de mes sin saltearse días', () => {
     const primeroDeMes = new Date(2026, 8, 1, 12);
-    const entries = { '2026-08-31': { value: 0.4 } };
+    const entries = { '2026-08-31': { score: 5 } };
     const out = lastNDays(entries, 2, primeroDeMes);
 
-    expect(out).toEqual([0.4, null]);
+    expect(out).toEqual([5, null]);
   });
 
   it('la ventana se desplaza sola al pasar los días', () => {
-    const entries = { '2026-09-11': { value: 0.8 } };
+    const entries = { '2026-09-11': { score: 9 } };
     // Tres días después, ese valor ya no es "hoy": queda 3 posiciones atrás.
     const out = lastNDays(entries, 28, new Date(2026, 8, 14, 12));
 
     expect(out[27]).toBeNull();
-    expect(out[24]).toBe(0.8);
+    expect(out[24]).toBe(9);
   });
 });
 
 describe('upsertEntry', () => {
   it('no muta el registro anterior', () => {
-    const antes = { '2026-09-10': { value: 0.3 } };
-    const despues = upsertEntry(antes, '2026-09-11', { value: 0.7 });
+    const antes = { '2026-09-10': { score: 3 } };
+    const despues = upsertEntry(antes, '2026-09-11', { score: 7 });
 
     expect(antes['2026-09-11']).toBeUndefined();
-    expect(despues['2026-09-11'].value).toBe(0.7);
-    expect(despues['2026-09-10']).toEqual({ value: 0.3 });
+    expect(despues['2026-09-11'].score).toBe(7);
+    expect(despues['2026-09-10']).toEqual({ score: 3 });
   });
 
   it('conserva la nota al recalificar el mismo día', () => {
-    const antes = upsertEntry({}, '2026-09-11', { value: 0.5, note: 'algo' });
-    const despues = upsertEntry(antes, '2026-09-11', { value: 0.9 });
+    const antes = upsertEntry({}, '2026-09-11', { score: 5, note: 'algo' });
+    const despues = upsertEntry(antes, '2026-09-11', { score: 9 });
 
-    expect(despues['2026-09-11']).toMatchObject({ value: 0.9, note: 'algo' });
+    expect(despues['2026-09-11']).toMatchObject({ score: 9, note: 'algo' });
   });
 });
 
 describe('entriesFromSeries', () => {
   it('mapea la serie a días consecutivos terminando en endDate', () => {
-    const out = entriesFromSeries([0.2, 0.4, 0.6], new Date(2026, 8, 11, 12));
+    const out = entriesFromSeries([3, 5, 7], new Date(2026, 8, 11, 12));
 
     expect(Object.keys(out).sort()).toEqual(['2026-09-09', '2026-09-10', '2026-09-11']);
-    expect(out['2026-09-11'].value).toBe(0.6);
+    expect(out['2026-09-11'].score).toBe(7);
   });
 
   it('saltea los nulls en vez de guardarlos', () => {
-    const out = entriesFromSeries([0.2, null, 0.6], new Date(2026, 8, 11, 12));
+    const out = entriesFromSeries([3, null, 7], new Date(2026, 8, 11, 12));
 
     expect(out['2026-09-10']).toBeUndefined();
     expect(Object.keys(out)).toHaveLength(2);

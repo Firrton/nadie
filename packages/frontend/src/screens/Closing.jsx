@@ -95,13 +95,13 @@ export default function Closing({
             <div style={{ display: 'flex', justifyContent: 'space-between', gap: 'var(--space-2)' }}>
               {RATING_STEPS.map((s) => (
                 <button
-                  key={s.value}
+                  key={s.score}
                   type="button"
-                  onClick={() => onRate(s.value)}
+                  onClick={() => onRate(s.score)}
                   aria-label={s.label}
                   style={{
                     width: 48, height: 48, borderRadius: 'var(--radius-full)',
-                    background: moodTint(s.value),
+                    background: moodTint(s.score),
                     border: '1px solid var(--border-1)',
                     cursor: 'pointer', padding: 0,
                     transition: 'border-color var(--dur-1) var(--ease-out), transform var(--dur-1) var(--ease-out)',
