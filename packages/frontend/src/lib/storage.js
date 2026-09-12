@@ -25,6 +25,20 @@ function isValidEntry(entry) {
   return true;
 }
 
+/* OJO — divergencia conocida con @nadie/core.
+
+   `CheckInProposalSchema` (packages/core/src/schemas.js) define el check-in
+   como `score: entero 1–10`. Acá el ánimo es `value: float 0..1`, porque esta
+   persistencia se escribió antes de que existiera ese contrato.
+
+   Consecuencia concreta: un check-in con la forma de core entra acá y lo
+   descarta isValidEntry dos veces — no trae `value`, y si lo renombraras, 7
+   está fuera de 0..1. Unificar la escala toca mood.js (RATING_STEPS), la
+   comparación contra 0.5 de moodTint y buildJourney, MoodCurve y sus tests: es
+   una decisión deliberada, no un rename.
+
+   Mientras tanto, descartar no puede ser silencioso. */
+
 /* Devuelve el registro guardado, o {} ante cualquier problema.
    Un localStorage corrupto, editado a mano o de otra versión no puede tirar la
    app: se descarta lo inválido y se devuelve lo que sí se entiende. */
@@ -48,9 +62,19 @@ export function loadMoodLog() {
   if (!entries || typeof entries !== 'object') return {};
 
   const limpio = {};
+  let descartados = 0;
   Object.keys(entries).forEach((key) => {
     if (DATE_KEY.test(key) && isValidEntry(entries[key])) limpio[key] = entries[key];
+    else descartados += 1;
   });
+
+  /* Solo la cuenta, nunca el contenido: lo que hay acá es lo más sensible de la
+     app y no puede terminar en la consola de nadie. Que aparezca este aviso
+     significa que algo escribió con otra forma — ver la divergencia con core
+     arriba— y que ese dato se está perdiendo. */
+  if (descartados > 0 && typeof console !== 'undefined') {
+    console.warn('[nadie] se descartaron ' + descartados + ' entradas del registro por tener una forma desconocida');
+  }
   return limpio;
 }
 

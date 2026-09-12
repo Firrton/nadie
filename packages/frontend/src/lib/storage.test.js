@@ -59,6 +59,47 @@ describe('loadMoodLog', () => {
 
     expect(loadMoodLog()).toEqual({});
   });
+
+  it('avisa cuando descarta, con la cuenta y sin el contenido', () => {
+    const aviso = vi.spyOn(console, 'warn').mockImplementation(() => {});
+    stubStorage().set(KEY, JSON.stringify({
+      v: 1,
+      entries: { '2026-09-11': { value: 4, note: 'algo muy privado' } },
+    }));
+
+    loadMoodLog();
+
+    expect(aviso).toHaveBeenCalledTimes(1);
+    const texto = aviso.mock.calls[0][0];
+    expect(texto).toContain('1');
+    expect(texto).not.toContain('algo muy privado'); // el contenido nunca sale
+    aviso.mockRestore();
+  });
+
+  it('no avisa cuando esta todo bien', () => {
+    const aviso = vi.spyOn(console, 'warn').mockImplementation(() => {});
+    saveMoodLog({ '2026-09-11': { value: 0.7 } });
+
+    loadMoodLog();
+
+    expect(aviso).not.toHaveBeenCalled();
+    aviso.mockRestore();
+  });
+
+  /* Documenta la divergencia con @nadie/core como hecho ejecutable, no como
+     comentario. Si alguien unifica la escala, este test tiene que cambiar —
+     y ese es justamente el punto. */
+  it('un check-in con la forma de core (score 1-10) hoy se descarta', () => {
+    const aviso = vi.spyOn(console, 'warn').mockImplementation(() => {});
+    stubStorage().set(KEY, JSON.stringify({
+      v: 1,
+      entries: { '2026-09-11': { score: 7, emotions: [], source: 'manual' } },
+    }));
+
+    expect(loadMoodLog()).toEqual({});
+    expect(aviso).toHaveBeenCalled();
+    aviso.mockRestore();
+  });
 });
 
 describe('saveMoodLog', () => {
