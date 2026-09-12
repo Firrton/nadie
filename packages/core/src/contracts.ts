@@ -151,16 +151,12 @@ export interface Revocation {
 }
 
 // ---------------------------------------------------------------------------
-// Paquete cifrado (Goal 6 lo implementa; aquí solo el tipo compartido)
+// Paquete cifrado (Goal 6): el tipo vivo vive en encrypted-package.ts;
+// aquí solo se reexporta para el contrato NadieCore.
 // ---------------------------------------------------------------------------
 
-/** Envoltura cifrada de punta a punta. El gateway nunca ve texto claro. */
-export interface EncryptedPackage {
-  version: number;
-  ciphertext: string;
-  nonce: string;
-  wrappedKey: string;
-}
+export type { EncryptedPackage } from "./encrypted-package";
+import type { EncryptedPackage } from "./encrypted-package";
 
 /** Registro de un paquete compartido, local al dispositivo. */
 export interface SharedRecord {

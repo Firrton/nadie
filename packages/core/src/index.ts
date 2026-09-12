@@ -54,3 +54,28 @@ export type {
   CheckInProposal,
   ShareSummaryDraft,
 } from "./schemas";
+
+// ---------------------------------------------------------------------------
+// Formato v1 de paquete cifrado (Goal 6)
+// ---------------------------------------------------------------------------
+
+export type {
+  EncryptionPrivateKey,
+  EncryptionPublicKey,
+  PackageMetadata,
+  EncryptionKeyPair,
+} from "./encrypted-package";
+export {
+  PACKAGE_VERSION,
+  PACKAGE_ALGORITHM,
+  EncryptedPackageError,
+  EncryptedPackageErrorCode,
+  generateEncryptionKeyPair,
+  encryptPackage,
+  decryptPackage,
+  serializeEncryptedPackage,
+  deserializeEncryptedPackage,
+  hashEncryptedPackage,
+  EncryptedPackageSchema,
+  PackageMetadataSchema,
+} from "./encrypted-package";
