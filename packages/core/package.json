@@ -3,7 +3,7 @@
   "version": "0.1.0",
   "private": true,
   "type": "module",
-  "description": "Nadie core package skeleton. Domain contracts arrive in Goal 2.",
+  "description": "Nadie core: public contracts, ports and runtime schemas. No implementations.",
   "license": "MIT",
   "exports": {
     ".": {
@@ -11,12 +11,20 @@
       "default": "./dist/index.js"
     }
   },
-  "files": ["dist"],
+  "files": [
+    "dist"
+  ],
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
   "scripts": {
     "build": "tsc -b",
-    "test": "node --test",
+    "test": "vitest run",
     "typecheck": "tsc -b --noEmit false && tsc --noEmit -p tsconfig.json"
+  },
+  "dependencies": {
+    "zod": "^4.6.2"
+  },
+  "devDependencies": {
+    "vitest": "^3.2.7"
   }
 }
