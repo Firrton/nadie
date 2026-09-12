@@ -14,7 +14,7 @@ import Settings from './screens/Settings.jsx';
 
 const NAV_SCREENS = ['home', 'camino', 'ajustes'];
 
-export default function App({ llm }) {
+export default function App({ llm, carga = null }) {
   const n = useNadie({ llm });
   const { screen } = n;
   const showNav = NAV_SCREENS.includes(screen);
@@ -52,6 +52,7 @@ export default function App({ llm }) {
           hasToday={n.mood.today != null}
           onStart={n.session.start}
           onOpenJourney={() => n.go('camino')}
+          carga={carga}
         />
       )}
 

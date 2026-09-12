@@ -63,4 +63,26 @@ export const FRASES_DE_ESPERA = [
   { texto: 'Aun si supiera que el mundo se hará pedazos mañana, hoy aún plantaría mi manzano.', autor: 'Martín Lutero' },
 ];
 
+/* BORRADOR — pendiente de marca.
+
+   Las FRASES_DE_ESPERA las eligió el equipo y son definitivas. Estas dos o tres
+   líneas de alrededor NO: son lo mínimo para que la pantalla exista y están
+   escritas siguiendo las reglas de tono de arriba (tuteo, frases cortas,
+   sentence case, cero palabras clínicas). Reemplazar sin culpa.
+
+   Sobre "sin soporte": dice que Nadie sigue trabajando en equipos más modestos,
+   SIN comprometer fecha. El muro real es un límite del navegador
+   (maxStorageBufferBindingSize), no nuestro, y prometer resolverlo sería prometer
+   algo que no controlamos. */
+export const COPY_ESPERA = {
+  titulo: 'Nadie se está instalando.',
+  sub: 'Solo pasa esta vez. Después funciona sin internet.',
+  /* Mientras tanto la app sirve igual: el ánimo se registra sin modelo. */
+  mientras: 'Puedes registrar cómo te sientes mientras tanto.',
+  sinSoporte: {
+    titulo: 'Este equipo todavía no puede con el modelo.',
+    sub: 'Seguimos trabajando para que Nadie corra en equipos más modestos. Tu registro de ánimo funciona igual.',
+  },
+};
+
 export const CRISIS_LINE = 'México: Línea de la Vida, 800 911 2000 · España: línea 024';

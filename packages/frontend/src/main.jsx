@@ -2,6 +2,7 @@ import React from 'react';
 import { createRoot } from 'react-dom/client';
 import App from './App.jsx';
 import { arrancarIA, iaLocalActivada } from './lib/llm/arranque.js';
+import { crearSeguimientoDeCarga } from './lib/llm/carga.js';
 import './styles/styles.css';
 import './styles/theme.css';
 
@@ -21,15 +22,48 @@ import './styles/theme.css';
    así que la IA local queda detrás de un flag hasta entonces (REGLAS §5). */
 const raiz = createRoot(document.getElementById('root'));
 
-arrancarIA({ activado: iaLocalActivada() }).then(({ puerto, modo, adaptador, modelo }) => {
-  raiz.render(<App llm={puerto} />);
+const seguimiento = crearSeguimientoDeCarga();
+let carga = null;
+let puertoActual = null;
+
+function dibujar() {
+  raiz.render(<App llm={puertoActual} carga={carga} />);
+}
+
+arrancarIA({
+  activado: iaLocalActivada(),
+  onProgreso: (p) => {
+    seguimiento.registrar(p);
+    carga = { estado: 'cargando', ...seguimiento.estado() };
+    dibujar();
+  },
+}).then(({ puerto, modo, adaptador, modelo }) => {
+  puertoActual = puerto;
+
+  /* 'demo' no muestra espera: no hay nada que esperar. */
+  carga = modo === 'local' ? { estado: 'cargando', porcentaje: 0, segundosRestantes: null }
+    : modo === 'sin-soporte' ? { estado: 'sin-soporte' }
+      : null;
+  dibujar();
 
   if (adaptador) {
     /* Sin await: la carga corre por detrás mientras la persona usa la app. */
-    adaptador.cargar().catch(() => {
-      /* Perder el modelo no puede tirar la app: el registro de ánimo sigue
-         funcionando entero sin él. Cuando exista el copy, acá va el aviso. */
-    });
+    adaptador.cargar().then(
+      (r) => {
+        carga = { estado: 'listo' };
+        dibujar();
+        if (typeof console !== 'undefined') {
+          console.info('[nadie] modelo listo: ' + r.modelo
+            + (r.descartados.length ? ' (descartados: ' + r.descartados.join(', ') + ')' : ''));
+        }
+      },
+      () => {
+        /* Ni un modelo de la escalera cargó. Perder el modelo no puede tirar la
+           app: el registro de ánimo sigue funcionando entero sin él. */
+        carga = { estado: 'sin-soporte' };
+        dibujar();
+      },
+    );
   }
 
   if (typeof console !== 'undefined' && modo !== 'demo') {
