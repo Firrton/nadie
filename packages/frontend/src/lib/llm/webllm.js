@@ -6,6 +6,7 @@ import {
 } from '@nadie/core';
 import { ahoraEnSegundos } from './messages.js';
 import { armarMensajes, armarMensajesDeExtraccion } from './prompt.js';
+import { MODELO_POR_DEFECTO } from './modelos.js';
 
 /* Adaptador de WebLLM: la implementación real del LLMPort de @nadie/core.
 
@@ -31,12 +32,10 @@ import { armarMensajes, armarMensajesDeExtraccion } from './prompt.js';
    useNadie sin que se entere de nada, y `cargar` con su progreso es problema de
    la raíz de composición, que es la que puede dibujarlo. Cero cambios en core. */
 
-/* Candidato principal (ARQUITECTURA §4.3: español, 1-3B, cuantizado). Llama 3.2
-   trae el español entre sus idiomas oficiales y entra en ~2.3 GB de VRAM.
-   NO está decidido de una tabla: la elección final sale de escuchar dos modelos
-   hablar en español. Está acá, en una constante, justamente para que cambiarlo
-   sea una línea. */
-export const MODELO_POR_DEFECTO = 'Llama-3.2-3B-Instruct-q4f16_1-MLC';
+/* El catálogo y la elección viven en modelos.js: son una política con tests
+   propios, no un detalle del adaptador. Se re-exporta para que quien compone la
+   app no tenga que importar de dos lados. */
+export { MODELO_POR_DEFECTO } from './modelos.js';
 
 export const ESTADOS = ['sin-cargar', 'cargando', 'listo', 'error'];
 
