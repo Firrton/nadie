@@ -84,3 +84,23 @@ export function pasoMasCercano(score) {
     return Math.abs(paso.score - MOOD_NEUTRAL) < Math.abs(mejor.score - MOOD_NEUTRAL) ? paso : mejor;
   });
 }
+
+/* Color de un puntaje por su NIVEL, no por su dirección.
+
+   La curva de ánimo pinta DIRECCIÓN: azul si subió respecto al día anterior,
+   rojo si bajó. Para eso hacen falta dos días, y el primero de una serie no
+   tiene anterior — así que se pintaba gris.
+
+   Con un solo registro eso deja a la persona mirando su ánimo SIN COLOR en la
+   pantalla principal, justo después de registrarlo por primera vez: parece que
+   no se guardó. El resto de la app (las celdas del calendario, los círculos de
+   calificación) ya pinta por nivel con moodTint, así que el primer punto también.
+
+   La curva sigue siendo de dirección de ahí en adelante: esto solo le da color
+   al punto que no tiene con qué compararse. */
+export function colorDeNivel(score, upColor = MOOD_UP, downColor = MOOD_DOWN, planoColor = null) {
+  if (score == null) return planoColor;
+  if (score > MOOD_NEUTRAL) return upColor;
+  if (score < MOOD_NEUTRAL) return downColor;
+  return planoColor;
+}

@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { MOOD_MAX, MOOD_MIN, MOOD_NEUTRAL, RATING_STEPS, moodTint } from './mood.js';
+import { MOOD_MAX, MOOD_MIN, MOOD_NEUTRAL, RATING_STEPS, colorDeNivel, moodTint } from './mood.js';
 
 /* Estos tests fijan una DECISIÓN DE PRODUCTO, no una implementación.
 
@@ -64,5 +64,25 @@ describe('moodTint', () => {
      se sale del rango normalizado. Sin el tope, el alpha se iría de escala. */
   it('un 10 —que la UI no ofrece pero core permite— no rompe el alpha', () => {
     expect(alpha(moodTint(MOOD_MAX))).toBe(0.42);
+  });
+});
+
+/* El primer día registrado no tiene día anterior, así que la curva —que pinta
+   DIRECCIÓN— lo dejaba gris. Con un solo registro eso deja el ánimo sin color en
+   la pantalla principal justo después de registrarlo: parece que no se guardó. */
+describe('colorDeNivel', () => {
+  it('da color al punto que no tiene con qué compararse', () => {
+    expect(colorDeNivel(7, 'azul', 'rojo', 'gris')).toBe('azul');
+    expect(colorDeNivel(3, 'azul', 'rojo', 'gris')).toBe('rojo');
+  });
+
+  it('el neutro y el día sin registro quedan planos', () => {
+    expect(colorDeNivel(MOOD_NEUTRAL, 'azul', 'rojo', 'gris')).toBe('gris');
+    expect(colorDeNivel(null, 'azul', 'rojo', 'gris')).toBe('gris');
+  });
+
+  it('los extremos de la escala tienen color', () => {
+    expect(colorDeNivel(MOOD_MIN, 'azul', 'rojo', 'gris')).toBe('rojo');
+    expect(colorDeNivel(MOOD_MAX, 'azul', 'rojo', 'gris')).toBe('azul');
   });
 });

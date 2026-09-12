@@ -1,5 +1,5 @@
 import React from 'react';
-import { MOOD_MAX, MOOD_MIN } from '../lib/mood.js';
+import { MOOD_MAX, MOOD_MIN, colorDeNivel } from '../lib/mood.js';
 
 export function MoodCurve({
   values = [], width = 320, height = 80, min = MOOD_MIN, max = MOOD_MAX,
@@ -28,7 +28,12 @@ export function MoodCurve({
   }
   const dotColor = {};
   for (const run of runs) {
-    run.forEach((p, k) => { dotColor[p.i] = k === 0 ? flatColor : colorOf(run[k - 1], p); });
+    /* El primero de una serie no tiene con qué compararse: se pinta por NIVEL.
+       Antes salía gris, y con un solo registro eso dejaba el ánimo sin color en
+       la pantalla principal justo después de registrarlo. */
+    run.forEach((p, k) => {
+      dotColor[p.i] = k === 0 ? colorDeNivel(p.v, upColor, downColor, flatColor) : colorOf(run[k - 1], p);
+    });
   }
   let lastIdx = -1;
   for (let i = n - 1; i >= 0; i--) if (values[i] != null) { lastIdx = i; break; }
