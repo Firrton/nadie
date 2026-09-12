@@ -107,7 +107,10 @@ const INSTRUCCIONES_EXTRACCION = {
   memory: [
     'Resume la conversación que acaba de terminar.',
     'Responde SOLO con un objeto JSON con esta forma:',
-    '{"summary": texto de 3 a 5 líneas separadas por saltos de línea, "emotions": [{"label": etiqueta, "intensity": 1, 2 o 3}], "themes": [texto], "memories": [{"type": tipo, "content": texto}], "pending": [texto], "riskLevel": "bajo", "medio" o "alto"}',
+    /* `summary` va como ARRAY de 3 a 5 frases, no como un texto con saltos: es la
+       única forma de que el esquema pueda EXIGIR la cantidad de líneas en vez de
+       pedirla por favor. El adaptador las une antes de validar contra core. */
+    '{"summary": [3 a 5 frases, una por elemento], "emotions": [{"label": etiqueta, "intensity": 1, 2 o 3}], "themes": [texto], "memories": [{"type": tipo, "content": texto}], "pending": [texto], "riskLevel": "bajo", "medio" o "alto"}',
     'El resumen está escrito para la persona, no sobre ella. Sin palabras clínicas.',
     'Usa solo estas etiquetas de emoción: ',
   ],

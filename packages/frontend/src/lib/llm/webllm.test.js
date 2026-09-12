@@ -187,6 +187,41 @@ describe('la carga vive afuera del puerto', () => {
   });
 });
 
+describe('techo de tokens y timeout', () => {
+  /* Sin techo, un modelo que entra en bucle genera hasta agotar el contexto.
+     Observado de verdad: el 1B emitiendo espacios en blanco dentro del JSON. */
+  it('le pone techo a las dos tareas, y la extracción tiene más aire', async () => {
+    const { motor, adaptador } = armar(CHECKIN_VALIDO);
+    await adaptador.cargar();
+
+    await adaptador.puerto.chat([], []);
+    await adaptador.puerto.extract([], 'checkin');
+
+    const [chat, extraccion] = motor.pedidos;
+    expect(chat.max_tokens).toBeGreaterThan(0);
+    expect(extraccion.max_tokens).toBeGreaterThan(chat.max_tokens);
+  });
+
+  /* Un abort fatal del runtime de WebGPU NO rechaza la promesa: se queda en el
+     aire. Sin esto, useNadie se queda en "processing" para siempre y la persona
+     mira un orbe que piensa sin fin. */
+  it('una respuesta que nunca llega termina en error, no en espera eterna', async () => {
+    vi.useFakeTimers();
+    const motor = {
+      chat: { completions: { create: () => new Promise(() => {}) } },
+    };
+    const adaptador = crearWebLLM({ crearEngine: async () => motor });
+    await adaptador.cargar();
+
+    const enVuelo = adaptador.puerto.chat([], []);
+    const afirmacion = expect(enVuelo).rejects.toThrow(/no respondió/);
+    await vi.advanceTimersByTimeAsync(60000);
+    await afirmacion;
+
+    vi.useRealTimers();
+  });
+});
+
 describe('chat', () => {
   it('devuelve SOLO lo nuevo, con la forma de ChatMessage', async () => {
     vi.spyOn(Date, 'now').mockReturnValue(1789000000123);
@@ -353,9 +388,65 @@ describe('extract', () => {
     expect(motor.pedidos).toHaveLength(0);
   });
 
+  /* JSON Schema restringe la FORMA, no las reglas: no sabe decir "un string de 3
+     a 5 líneas". Medido con el banco, memory daba 0/3 con el 1B Y con el 1.5B —
+     los dos fallando igual probó que el problema era nuestro. Se le pide un array,
+     que sí se puede exigir, y se une antes de validar. */
+  it('a memory le pide el resumen como array de 3 a 5, que el esquema SÍ puede exigir', async () => {
+    const { motor, adaptador } = armar('{"x":1}');
+    await adaptador.cargar();
+
+    await adaptador.puerto.extract([], 'memory').catch(() => {});
+    const js = JSON.parse(motor.pedidos[0].response_format.schema);
+
+    expect(js.properties.summary).toMatchObject({
+      type: 'array',
+      minItems: 3,
+      maxItems: 5,
+    });
+  });
+
+  it('une las líneas antes de validar, así core recibe lo que su esquema pide', async () => {
+    const memoria = JSON.stringify({
+      summary: ['Hablaste de un día que pesó.', 'Dijiste que son muchas cosas chicas.', 'Querías soltarlo.'],
+      emotions: [{ label: 'cansancio', intensity: 3 }],
+      themes: ['trabajo'],
+      memories: [],
+      pending: [],
+      riskLevel: 'bajo',
+    });
+    const { adaptador } = armar(memoria);
+    await adaptador.cargar();
+
+    const salida = await adaptador.puerto.extract([], 'memory');
+
+    expect(typeof salida.summary).toBe('string');
+    expect(salida.summary.split('\n')).toHaveLength(3);
+    expect(salida.summary).toContain('Hablaste de un día que pesó.');
+  });
+
+  /* Si otra versión de la librería ignorara el esquema y devolviera el string,
+     tiene que pasar derecho y que lo juzgue Zod, no romperse acá. */
+  it('si el modelo igual manda un string, no se rompe', async () => {
+    const memoria = JSON.stringify({
+      summary: 'Una.\nDos.\nTres.',
+      emotions: [],
+      themes: ['trabajo'],
+      memories: [],
+      pending: [],
+      riskLevel: 'bajo',
+    });
+    const { adaptador } = armar(memoria);
+    await adaptador.cargar();
+
+    await expect(adaptador.puerto.extract([], 'memory')).resolves.toMatchObject({
+      summary: 'Una.\nDos.\nTres.',
+    });
+  });
+
   it('valida también los otros dos esquemas de core', async () => {
     const memoria = JSON.stringify({
-      summary: 'Hablaste de un día que pesó.\nDijiste que son muchas cosas chicas.\nQuedaste con ganas de soltarlo.',
+      summary: ['Hablaste de un día que pesó.', 'Dijiste que son muchas cosas chicas.', 'Quedaste con ganas de soltarlo.'],
       emotions: [{ label: 'cansancio', intensity: 3 }],
       themes: ['trabajo'],
       memories: [{ type: 'tema', content: 'la carga del trabajo' }],

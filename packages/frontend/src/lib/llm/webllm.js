@@ -46,6 +46,47 @@ const ESQUEMAS = {
   'share-summary': ShareSummaryDraftSchema,
 };
 
+/* AJUSTES entre lo que el modelo puede cumplir y lo que core exige.
+
+   JSON Schema restringe la FORMA, no las reglas. `SummarySchema` de core pide un
+   string de 3 a 5 LÍNEAS no vacías, y eso ningún JSON Schema lo puede decir: el
+   decodificador cumple la forma —un string— y se saltea la regla, así que el
+   modelo devuelve una línea y Zod lo rechaza.
+
+   Medido con el banco: `memory` daba 0/3 con el 1B Y con el 1.5B. Los dos
+   fallando igual es la prueba de que el problema era nuestro, no del modelo.
+
+   La salida: pedirle un ARRAY de 3 a 5 strings, que JSON Schema SÍ sabe expresar
+   con minItems/maxItems, y unirlo con saltos antes de validar. El decodificador
+   queda OBLIGADO a producir las líneas en vez de que se las pidamos por favor en
+   el prompt.
+
+   El adaptador es el lugar de esto, no core: traducir entre lo que un modelo
+   puede garantizar y lo que el contrato exige es exactamente su trabajo. */
+const AJUSTES = {
+  memory: {
+    esquema: (js) => ({
+      ...js,
+      properties: {
+        ...js.properties,
+        summary: {
+          type: 'array',
+          items: { type: 'string', minLength: 1 },
+          minItems: 3,
+          maxItems: 5,
+        },
+      },
+    }),
+    /* Tolerante a propósito: si el modelo igual devuelve un string —porque otra
+       versión de la librería ignore el esquema— pasa derecho y lo juzga Zod. */
+    normalizar: (datos) => {
+      if (!datos || !Array.isArray(datos.summary)) return datos;
+      const lineas = datos.summary.map((l) => String(l).trim()).filter(Boolean);
+      return { ...datos, summary: lineas.join('\n') };
+    },
+  },
+};
+
 /* El JSON Schema que se le pasa al modelo se DERIVA de los mismos esquemas Zod
    de core. Escribirlo a mano sería tener el contrato en dos lugares, y el día
    que core cambie una etiqueta de emoción, el modelo seguiría proponiendo la
@@ -56,7 +97,8 @@ const ESQUEMAS = {
 const JSON_SCHEMAS = Object.fromEntries(
   Object.entries(ESQUEMAS).map(([nombre, esquema]) => {
     const { $schema, ...forma } = z.toJSONSchema(esquema);
-    return [nombre, JSON.stringify(forma)];
+    const ajuste = AJUSTES[nombre];
+    return [nombre, JSON.stringify(ajuste && ajuste.esquema ? ajuste.esquema(forma) : forma)];
   }),
 );
 
@@ -74,6 +116,31 @@ function sinCercaDeCodigo(texto) {
    que "reintentar una vez" (REGLAS §5) sería puro teatro. */
 const TEMPERATURA_EXTRACCION = [0, 0.4];
 const TEMPERATURA_CHAT = 0.7;
+
+/* TECHO DE TOKENS. Sin esto, un modelo que entra en bucle genera hasta agotar el
+   contexto (4096) y se lleva minutos por respuesta. Observado de verdad: con
+   decodificación restringida, el 1B empezó a emitir espacios en blanco dentro
+   del JSON y no paraba.
+
+   El de chat sale del propio prompt: pide dos o tres frases. El de extracción es
+   más alto porque una extracción de memoria trae resumen, emociones, temas y
+   recuerdos. */
+const TOPE_CHAT = 220;
+const TOPE_EXTRACCION = 600;
+
+/* Ninguna llamada puede colgarse para siempre. Un abort fatal del runtime de
+   WebGPU NO rechaza la promesa: se queda en el aire, y arriba useNadie se
+   quedaría en "processing" sin forma de salir. Perder la respuesta es malo;
+   dejar a la persona mirando un orbe que piensa sin fin es peor. */
+const TIMEOUT_MS = 45000;
+
+function conTimeout(promesa, ms = TIMEOUT_MS) {
+  let reloj;
+  const limite = new Promise((_, rechazar) => {
+    reloj = setTimeout(() => rechazar(new Error('el modelo no respondió en ' + Math.round(ms / 1000) + 's')), ms);
+  });
+  return Promise.race([promesa, limite]).finally(() => clearTimeout(reloj));
+}
 
 export function crearWebLLM({ crearEngine, modelo = MODELO_POR_DEFECTO, onProgreso } = {}) {
   if (typeof crearEngine !== 'function') {
@@ -119,11 +186,13 @@ export function crearWebLLM({ crearEngine, modelo = MODELO_POR_DEFECTO, onProgre
   }
 
   async function completar(mensajes, opciones) {
-    const respuesta = await exigirMotor().chat.completions.create({
-      stream: false,
-      messages: mensajes,
-      ...opciones,
-    });
+    const respuesta = await conTimeout(
+      exigirMotor().chat.completions.create({
+        stream: false,
+        messages: mensajes,
+        ...opciones,
+      }),
+    );
 
     const texto = respuesta && respuesta.choices && respuesta.choices[0]
       ? respuesta.choices[0].message && respuesta.choices[0].message.content
@@ -142,6 +211,7 @@ export function crearWebLLM({ crearEngine, modelo = MODELO_POR_DEFECTO, onProgre
     async chat(messages, context) {
       const texto = await completar(armarMensajes(messages, context), {
         temperature: TEMPERATURA_CHAT,
+        max_tokens: TOPE_CHAT,
       });
       return [{ role: 'assistant', content: texto, at: ahoraEnSegundos() }];
     },
@@ -171,6 +241,7 @@ export function crearWebLLM({ crearEngine, modelo = MODELO_POR_DEFECTO, onProgre
                a "algo que sea JSON". */
             response_format: { type: 'json_object', schema: JSON_SCHEMAS[schema] },
             temperature: TEMPERATURA_EXTRACCION[intento],
+            max_tokens: TOPE_EXTRACCION,
           });
         } catch (e) {
           ultimoMotivo = 'el modelo falló al responder';
@@ -185,7 +256,8 @@ export function crearWebLLM({ crearEngine, modelo = MODELO_POR_DEFECTO, onProgre
           continue;
         }
 
-        const resultado = esquema.safeParse(datos);
+        const ajuste = AJUSTES[schema];
+        const resultado = esquema.safeParse(ajuste && ajuste.normalizar ? ajuste.normalizar(datos) : datos);
         if (resultado.success) return resultado.data;
         ultimoMotivo = 'la salida no cumple el esquema';
       }
