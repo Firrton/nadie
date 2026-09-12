@@ -3,6 +3,7 @@ import { createRoot } from 'react-dom/client';
 import App from './App.jsx';
 import { arrancarIA, iaLocalActivada } from './lib/llm/arranque.js';
 import { crearSeguimientoDeCarga } from './lib/llm/carga.js';
+import { asegurarPersistencia } from './lib/persistencia.js';
 import './styles/styles.css';
 import './styles/theme.css';
 
@@ -47,6 +48,11 @@ arrancarIA({
   dibujar();
 
   if (adaptador) {
+    /* Antes de bajar 873 MB, pedir que el navegador no los borre. Sin await: si
+       lo niegan, la descarga sigue igual — lo que se pierde es la garantía de que
+       no haya que repetirla. */
+    asegurarPersistencia();
+
     /* Sin await: la carga corre por detrás mientras la persona usa la app. */
     adaptador.cargar().then(
       (r) => {

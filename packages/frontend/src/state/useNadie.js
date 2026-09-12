@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { DEMO_MONTH, DEMO_USER_LINES, VOICES } from '../data/content.js';
 import { clearMoodLog, loadMoodLog, saveMoodLog } from '../lib/storage.js';
+import { asegurarPersistencia } from '../lib/persistencia.js';
 import { dateKey, entriesFromSeries, lastNDays, upsertEntry } from '../lib/moodLog.js';
 import { crearDemoLLM } from '../lib/llm/demo.js';
 import { QUIEN_NADIE, QUIEN_USUARIO, turnosAMensajes } from '../lib/llm/messages.js';
@@ -231,8 +232,14 @@ export function useNadie({ initialScreen = 'onboarding', seedDemo = false, llm }
        y solo es 'ai-confirmed' si tocó JUSTO el círculo sugerido. */
     const next = upsertEntry(entriesRef.current, dateKey(), entradaDeCheckIn(score, propuestaRef.current));
     setEntries(next);
-    saveMoodLog(next);
+    const guardado = saveMoodLog(next);
     setRated(true);
+
+    /* Recién ahora hay algo que perder. El registro vive en localStorage, que el
+       navegador puede desalojar cuando necesita espacio — y esto no se vuelve a
+       bajar de ningún lado. Sin await y sin manejar el resultado: que lo nieguen
+       no cambia nada de lo que la app hace. */
+    if (guardado) asegurarPersistencia();
   }, []);
 
   /* La nota es opcional y sale del usuario, no de la transcripción. Es el dato
