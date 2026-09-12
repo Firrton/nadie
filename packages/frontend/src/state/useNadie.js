@@ -1,7 +1,9 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { DEMO_MONTH, DEMO_REPLIES, DEMO_USER_LINES, VOICES } from '../data/content.js';
+import { DEMO_MONTH, DEMO_USER_LINES, VOICES } from '../data/content.js';
 import { clearMoodLog, loadMoodLog, saveMoodLog } from '../lib/storage.js';
 import { dateKey, entriesFromSeries, lastNDays, upsertEntry } from '../lib/moodLog.js';
+import { crearDemoLLM } from '../lib/llm/demo.js';
+import { QUIEN_NADIE, QUIEN_USUARIO, turnosAMensajes } from '../lib/llm/messages.js';
 
 /* Estado único de la app.
 
@@ -20,7 +22,13 @@ import { dateKey, entriesFromSeries, lastNDays, upsertEntry } from '../lib/moodL
 const VENTANA_DIAS = 28;
 const NOTA_MAX = 500;
 
-export function useNadie({ initialScreen = 'onboarding', seedDemo = false } = {}) {
+export function useNadie({ initialScreen = 'onboarding', seedDemo = false, llm } = {}) {
+  /* El puerto de inferencia se inyecta. Por defecto es el guion de demo; el día
+     que entre WebLLM se pasa otro objeto con la misma forma y no se toca nada
+     más acá. useRef para que no se recree en cada render. */
+  const puerto = useRef(null);
+  if (puerto.current === null) puerto.current = llm || crearDemoLLM();
+
   const [screen, setScreen] = useState(initialScreen);
   const [obStep, setObStep] = useState(0);
   const [under18, setUnder18] = useState(false);
@@ -52,6 +60,15 @@ export function useNadie({ initialScreen = 'onboarding', seedDemo = false } = {}
   const entriesRef = useRef(entries);
   entriesRef.current = entries;
 
+  // speakReply es async: cuando resuelve, `turns` y `convo` ya cambiaron.
+  const turnsRef = useRef(turns);
+  turnsRef.current = turns;
+  const convoRef = useRef(convo);
+  convoRef.current = convo;
+
+  // Invalida respuestas en vuelo (ver speakReply).
+  const generacion = useRef(0);
+
   const after = useCallback((ms, fn) => { timers.current.push(setTimeout(fn, ms)); }, []);
   const clearTimers = useCallback(() => {
     timers.current.forEach((t) => { clearTimeout(t); clearInterval(t); });
@@ -74,30 +91,63 @@ export function useNadie({ initialScreen = 'onboarding', seedDemo = false } = {}
     timers.current.push(id);
   }, [after]);
 
-  const speakReply = useCallback(() => {
-    const reply = DEMO_REPLIES[Math.min(exchange, DEMO_REPLIES.length - 1)];
+  /* Le pide la respuesta al puerto y recién ahí la escribe palabra por palabra.
+
+     El historial llega por parámetro, no por ref: quien llama acaba de hacer
+     setTurns y el ref todavía no se re-renderizó, así que leerlo mandaría la
+     conversación sin el último turno — el modelo respondería a lo anterior.
+
+     La latencia la pone el puerto (el demo espera, WebLLM tarda de verdad), por
+     eso ya no hay un after(1000) inventado acá. */
+  const speakReply = useCallback(async (historia) => {
+    /* Una respuesta en vuelo no se cancela con clearTimers: eso servía cuando
+       esto era un setTimeout, no ahora que es una promesa. Si la persona habla
+       encima —o cierra y abre otra sesión— la respuesta vieja llega igual y
+       pisaría a la nueva. Cada llamada se lleva un número; la que vuelve con
+       uno viejo se descarta. */
+    generacion.current += 1;
+    const mia = generacion.current;
+
+    let respuesta;
+    try {
+      respuesta = await puerto.current.chat(turnosAMensajes(historia), []);
+    } catch (e) {
+      if (mia !== generacion.current) return;
+      /* Sin copy de error aprobado —el del proyecto es final y no se inventa—
+         se vuelve a idle y la persona puede hablar de nuevo. Queda pendiente
+         decidir qué dice la app cuando el modelo no contesta. */
+      if (typeof console !== 'undefined') console.warn('[nadie] el modelo no respondió');
+      setLive('');
+      setConvo('idle');
+      return;
+    }
+
+    if (mia !== generacion.current) return; // llegó tarde: alguien habló encima
+    const texto = (respuesta || []).map((m) => m.content).join(' ').trim();
+    if (!texto) { setLive(''); setConvo('idle'); return; }
+
     setConvo('speaking');
     setLive('');
-    streamWords(reply, 120, setLive, () => {
-      setTurns((t) => [...t, { who: 'nadie', text: reply }]);
+    streamWords(texto, 120, setLive, () => {
+      setTurns((t) => [...t, { who: QUIEN_NADIE, text: texto }]);
       setLive('');
       setConvo('idle');
       setExchange((n) => n + 1);
     });
-  }, [exchange, streamWords]);
+  }, [streamWords]);
 
   const stopListening = useCallback(() => {
-    setConvo((c) => {
-      if (c !== 'listening') return c;
-      clearTimers();
-      const said = live;
-      if (!said) { setLive(''); return 'idle'; }
-      setTurns((t) => [...t, { who: 'tú', text: said }]);
-      setLive('');
-      after(1000, speakReply);
-      return 'processing';
-    });
-  }, [after, clearTimers, live, speakReply]);
+    if (convoRef.current !== 'listening') return;
+    clearTimers();
+    const said = live;
+    if (!said) { setLive(''); setConvo('idle'); return; }
+
+    const siguiente = [...turnsRef.current, { who: QUIEN_USUARIO, text: said }];
+    setTurns(siguiente);
+    setLive('');
+    setConvo('processing');
+    speakReply(siguiente);
+  }, [clearTimers, live, speakReply]);
 
   const startListening = useCallback((auto) => {
     const line = DEMO_USER_LINES[Math.min(exchange, DEMO_USER_LINES.length - 1)];
@@ -125,14 +175,16 @@ export function useNadie({ initialScreen = 'onboarding', seedDemo = false } = {}
     if (!dicho) return;
     clearTimers();
     setLive('');
-    setTurns((t) => [...t, { who: 'tú', text: dicho }]);
+    const siguiente = [...turnsRef.current, { who: QUIEN_USUARIO, text: dicho }];
+    setTurns(siguiente);
     setConvo('processing');
-    after(1000, speakReply);
-  }, [after, clearTimers, speakReply]);
+    speakReply(siguiente);
+  }, [clearTimers, speakReply]);
 
   const startSession = useCallback((heldMs) => {
     if (heldMs != null && heldMs < 250) return; // un toque corto no abre sesión
     clearTimers();
+    generacion.current += 1; // que no aterrice una respuesta de la sesión anterior
     setScreen('convo');
     setConvo('idle');
     setTurns([]);
@@ -145,6 +197,7 @@ export function useNadie({ initialScreen = 'onboarding', seedDemo = false } = {}
 
   const endSession = useCallback(() => {
     clearTimers();
+    generacion.current += 1; // "Terminar" también corta lo que esté en vuelo
     setConvo('idle');
     setPaused(false);
     setScreen('cierre');
