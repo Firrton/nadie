@@ -55,6 +55,9 @@ export default function App() {
           weekValues={n.mood.weekValues}
           rated={n.mood.rated}
           onRate={n.mood.rateToday}
+          note={n.mood.todayNote}
+          onNoteChange={n.mood.setTodayNote}
+          noteMaxLength={n.mood.noteMaxLength}
           onHome={() => n.go('home')}
           onOpenJourney={() => n.go('camino')}
         />
