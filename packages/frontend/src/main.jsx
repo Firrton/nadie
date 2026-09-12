@@ -4,6 +4,7 @@ import App from './App.jsx';
 import { arrancarIA, iaLocalActivada } from './lib/llm/arranque.js';
 import { crearSeguimientoDeCarga } from './lib/llm/carga.js';
 import { asegurarPersistencia } from './lib/persistencia.js';
+import { caminoDeDemoActivado } from './lib/caminoDeDemo.js';
 import './styles/styles.css';
 import './styles/theme.css';
 
@@ -26,9 +27,10 @@ const raiz = createRoot(document.getElementById('root'));
 const seguimiento = crearSeguimientoDeCarga();
 let carga = null;
 let puertoActual = null;
+const seedDemo = caminoDeDemoActivado();
 
 function dibujar() {
-  raiz.render(<App llm={puertoActual} carga={carga} />);
+  raiz.render(<App llm={puertoActual} carga={carga} seedDemo={seedDemo} />);
 }
 
 arrancarIA({
