@@ -8,3 +8,8 @@ solc_version = "0.8.24"
 optimizer = true
 optimizer_runs = 200
 evm_version = "cancun"
+
+# HashKey Chain Testnet (chain ID 133). La URL real se inyecta por entorno
+# (HASHKEY_RPC_URL) y nunca se versiona.
+[rpc_endpoints]
+hashkey_testnet = "${HASHKEY_RPC_URL}"
