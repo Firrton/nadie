@@ -13,15 +13,15 @@ Versión 0.1 · Documento de diseño, sin código. El código se escribe durante
 
 ### 1.1 Funcionales
 
-| ID | Qué hace |
-|---|---|
-| F1 | Conversar (texto por defecto, voz opcional) recordando lo que la persona contó antes |
-| F2 | Check-in diario: puntaje del día (1–10), emociones y una nota opcional |
-| F3 | "Mi camino": gráfico del ánimo y las emociones en el tiempo, con observaciones simples |
-| F4 | Memoria visible y editable: "lo que Nadie recuerda de ti" |
-| F5 | Compartir un resumen con un profesional verificado: por tiempo limitado, revocable y auditable |
-| F6 | Canal de respuesta del profesional sin revelar la identidad del usuario |
-| F7 | Protocolo de crisis: acceso inmediato a ayuda humana |
+| ID | Prioridad | Qué hace |
+|---|---|---|
+| F1 | Núcleo | Conversar por texto recordando lo que la persona contó antes; voz opcional |
+| F2 | Núcleo | Check-in diario: puntaje del día (1–10), emociones y una nota opcional |
+| F3 | Núcleo | "Mi camino": gráfico del ánimo y las emociones en el tiempo, con observaciones simples |
+| F4 | Núcleo | Memoria visible y editable: "lo que Nadie recuerda de ti" |
+| F5 | Núcleo | Compartir un resumen con un profesional verificado: por tiempo limitado, revocable y auditable |
+| F6 | Opcional | Canal de respuesta del profesional sin revelar la identidad del usuario |
+| F7 | Núcleo | Protocolo de crisis: acceso inmediato a ayuda humana |
 
 ### 1.2 No funcionales
 
@@ -39,7 +39,7 @@ Versión 0.1 · Documento de diseño, sin código. El código se escribe durante
 
 ### 1.4 Supuestos
 
-- El track de EAG acepta cualquier cadena compatible con Ethereum; se despliega también en HSK testnet como bono.
+- HashKey Chain Testnet (chain ID 133) es la red principal para el MVP y permite participar también en su track. Otros despliegues EVM quedan en el roadmap.
 - El WiFi del evento no es confiable: el modelo se descarga y se cachea antes.
 - Los profesionales del demo son cuentas de prueba verificadas por Nadie.
 
@@ -49,7 +49,7 @@ Versión 0.1 · Documento de diseño, sin código. El código se escribe durante
 
 1. **Local primero.** La conversación, la memoria y el gráfico viven en el dispositivo.
 2. **Humano + IA, 2-de-2.** La IA prepara; nada sale sin la firma del usuario. (Idea tomada del setup de IA local que Vitalik publicó en abril de 2026.)
-3. **La cadena es el notario, no la caja fuerte.** On-chain solo van permisos, sellos (hash del paquete cifrado), credenciales profesionales y registros de acceso.
+3. **La cadena es el notario, no la caja fuerte.** On-chain solo van permisos, sellos (hash del paquete cifrado), credenciales profesionales y registros de primera apertura.
 4. **Anonimato por diseño.** La persona que habla nunca se identifica; el profesional que escucha, siempre.
 5. **Acompañamiento, no tratamiento.** Sin diagnósticos, sin lenguaje clínico, sin escalas clínicas.
 6. **Honestidad radical.** Cada modo dice exactamente qué pasa con los datos.
@@ -62,7 +62,7 @@ El track 02 permite combinar Ethereum con ZK, TEE, FHE, MPC, almacenamiento cifr
 |---|---|---|
 | **Local-first software** | El modelo, la memoria y el gráfico viven en el dispositivo y funcionan sin conexión | Núcleo |
 | **Encrypted storage** | Baúl AES-GCM en el cliente, paquetes cifrados de punta a punta, borrado por destrucción de llave | Núcleo |
-| **TEE con attestation** | Inferencia de respaldo en enclave verificable, con recibos firmados | Nivel 2 |
+| **TEE con attestation** | Inferencia de respaldo en enclave verificable, con recibos firmados | Posterior al núcleo |
 | **ZK** | Vales anónimos de sesión (sección 8.1) | Opcional |
 | **zkTLS / web proofs** | Verificación de matrícula sin que Nadie sea el verificador | Roadmap |
 | **MPC** | Descartado: repartir una llave entre varias partes no resuelve ningún problema de este diseño | — |
@@ -279,7 +279,7 @@ Todo se calcula en el dispositivo a partir del baúl descifrado; nada se envía 
 5. Envuelve esa llave con la llave pública de cifrado del profesional, leída del ProfessionalRegistry.
 6. La persona firma un consentimiento EIP-712 con profesional, hash, alcance y vencimiento. El relayer lo envía a la cadena.
 7. El profesional ve el paquete pendiente en su portal y llama a `open`, que queda registrado on-chain. El gateway comprueba el permiso, le entrega el paquete y la llave envuelta, y él descifra en su navegador.
-8. La pantalla de auditoría de la persona lee los eventos: "Dra. X abrió tu resumen el 12 de septiembre a las 15:03".
+8. La pantalla de auditoría de la persona lee el evento de primera apertura: "Dra. X abrió tu resumen por primera vez el 12 de septiembre a las 15:03".
 9. **Revocar:** firma de revocación → relayer → cadena; el gateway deja de servir. Con honestidad: revocar corta el acceso futuro, no borra lo ya leído. Por eso se comparte un resumen por defecto y los permisos vencen pronto.
 10. **Responder:** el profesional escribe una respuesta cifrada a la llave pública del seudónimo, y el gateway la guarda asociada al permiso. Anonimato progresivo: la persona decide si revela su identidad y cuándo.
 
@@ -330,7 +330,7 @@ Todo se calcula en el dispositivo a partir del baúl descifrado; nada se envía 
 
 - `grantWithSig`: crea el permiso a partir de la firma EIP-712 del usuario; exige profesional verificado.
 - `revokeWithSig`: revoca con la firma del usuario.
-- `open`: solo el profesional; exige permiso válido y deja registro.
+- `open`: solo el profesional y con permiso válido. La primera llamada exitosa fija `firstOpenedAt` y emite `Opened`; las siguientes no cambian ese registro ni emiten nuevos eventos de apertura.
 - `isValid`: no revocado, no vencido y profesional verificado en ese momento. Si el profesional pierde la credencial, sus accesos mueren solos.
 
 **Eventos:** Granted, Opened, Revoked, Replied (este último solo con el hash de la respuesta).
@@ -389,7 +389,7 @@ Ninguno de los dos entra en el camino crítico del demo.
 | Paquete compartido | Gateway, cifrado | Sí, cifrado de punta a punta | Solo su hash |
 | Consentimiento | Cadena | — | Seudónimo, profesional, hash, vencimiento |
 | Credencial profesional | Cadena | — | Sí |
-| Aperturas y revocaciones | Cadena | — | Sí, como eventos |
+| Primera apertura y revocaciones | Cadena | — | Sí, como eventos |
 
 ---
 
@@ -413,16 +413,16 @@ Ninguno de los dos entra en el camino crítico del demo.
 | Bloque | Entregable |
 |---|---|
 | Viernes noche | Repo nuevo · contratos + tests + despliegue en testnet · llaves y baúl cifrado · check-in con datos sintéticos |
-| Sábado mañana | WebLLM + conversación + extracción de memoria en JSON + "Mi camino" |
+| Sábado mañana | WebLLM + conversación + extracción de memoria en JSON + "Mi camino" + pantalla local de crisis |
 | Sábado tarde | Compartir: gateway + relayer + portal del profesional → listo para el demo público en testnet |
-| Sábado noche | Modo voz con ElevenLabs y pantalla de crisis (solo si lo anterior funciona) |
+| Sábado noche | Modo voz con ElevenLabs (solo si lo anterior funciona) |
 | Domingo mañana | Pulido, guion de 3 minutos, ensayo de preguntas |
 
 **Orden de recortes si vas atrasado:** embeddings → ModelRegistry → vales anónimos → modo voz → canal de respuesta. Cada recorte pasa al roadmap, no a la basura.
 
-El nivel 2 (enclave) no está en esta lista: no es un extra sino la contingencia si la IA local no rinde. Si el modelo local falla el sábado al mediodía, el enclave pasa a ser el camino principal y el recorte es al revés.
+El nivel 2 (enclave) se implementa únicamente después de estabilizar la IA local y el flujo de compartir. Si el modelo local no rinde en el dispositivo de demo, se decide explícitamente si abrir una rama de contingencia para el enclave; no se cambia de arquitectura a mitad de una rama.
 
-**Lo que nunca se recorta:** IA local, memoria, check-in, gráfico y el flujo de compartir con firma.
+**Lo que nunca se recorta:** IA local, memoria, check-in, gráfico, protocolo de crisis y el flujo de compartir con firma.
 
 ---
 
@@ -431,7 +431,7 @@ El nivel 2 (enclave) no está en esta lista: no es un extra sino la contingencia
 | Tiempo | Qué se muestra |
 |---|---|
 | 0:00–0:30 | El problema: la gente le cuenta todo a una IA en la nube, o no se lo cuenta a nadie. "¿Quién lee lo que le cuentas a tu IA? Con Nadie, nadie." |
-| 0:30–1:15 | Check-in + conversación en modo privado con la pestaña de red abierta: cero solicitudes. El agente recuerda algo de una sesión anterior. |
+| 0:30–1:15 | Con el modelo y los assets ya cacheados: check-in + conversación en modo privado con el monitor de red abierto y cero solicitudes salientes. El agente recuerda algo de una sesión anterior. |
 | 1:15–1:45 | "Mi camino": 21 días de datos sintéticos y una observación. |
 | 1:45–2:30 | Compartir con una psicóloga verificada: firma, ella abre (evento on-chain), la auditoría lo muestra, se revoca, acceso denegado. |
 | 2:30–3:00 | Por qué Ethereum: la cadena no ejecuta la IA, declara qué IA tiene permiso de escucharte y quién puede leerte. Nombrar los mecanismos con sus palabras (local-first, encrypted storage, TEE con attestation, y ZK si llegaste a los vales). Cerrar con el SDK abierto y qué harías con 30 días en ShanHaiWoo. |
@@ -439,7 +439,7 @@ El nivel 2 (enclave) no está en esta lista: no es un extra sino la contingencia
 ### Preguntas del jurado y respuestas cortas
 
 - **¿La IA es local de verdad?** Por defecto, sí. Si el equipo no alcanza, pasa a un enclave verificable. La voz es opcional y sin retención.
-- **¿Por qué Ethereum y no una base de datos?** Porque la firma de la persona, la credencial del profesional y el registro de accesos no dependen de que confíes en nosotros: ni Nadie puede falsificarlos ni borrarlos.
+- **¿Por qué Ethereum y no una base de datos?** Porque la firma de la persona, la credencial del profesional y el registro de primera apertura no dependen de que confíes en nosotros: ni Nadie puede falsificarlos ni borrarlos.
 - **¿Quién verifica a los psicólogos?** En el MVP, Nadie revisa la matrícula. El diseño permite que mañana lo haga el colegio profesional o una prueba zkTLS.
 - **¿Qué pasa en una crisis?** Detección local y ayuda humana inmediata en pantalla. Nunca compartimos nada sin consentimiento.
 - **¿Qué pasa si revoco después de que leyó?** Se corta el acceso futuro; lo leído no se puede des-leer. Por eso se comparten resúmenes y los permisos vencen pronto.
@@ -452,7 +452,7 @@ El nivel 2 (enclave) no está en esta lista: no es un extra sino la contingencia
 - **Paquete 1:** contratos (ProfessionalRegistry + ConsentRegistry) con tests.
 - **Paquete 2:** SDK de consentimiento 2-de-2 para datos sensibles de IA: cifrar, envolver llaves, firmar, verificar y auditar. Sirve para cualquier app de salud, educación o recursos humanos.
 - **Paquete 3:** portal de ejemplo para profesionales.
-- Licencia MIT o Apache-2.0, con README de arquitectura y guía de integración. Esto también encaja con el track 04.
+- Licencia MIT, con README de arquitectura y guía de integración. Esto también encaja con el track 04.
 
 ---
 
