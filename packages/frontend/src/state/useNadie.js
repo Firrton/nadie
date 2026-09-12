@@ -4,6 +4,7 @@ import { clearMoodLog, loadMoodLog, saveMoodLog } from '../lib/storage.js';
 import { dateKey, entriesFromSeries, lastNDays, upsertEntry } from '../lib/moodLog.js';
 import { crearDemoLLM } from '../lib/llm/demo.js';
 import { QUIEN_NADIE, QUIEN_USUARIO, turnosAMensajes } from '../lib/llm/messages.js';
+import { entradaDeCheckIn, proponerCheckIn } from '../lib/llm/checkin.js';
 
 /* Estado único de la app.
 
@@ -42,6 +43,10 @@ export function useNadie({ initialScreen = 'onboarding', seedDemo = false, llm }
   const [exchange, setExchange] = useState(0);
   const [rated, setRated] = useState(false);
 
+  /* Check-in propuesto por el modelo al cerrar. Vive en memoria y muere con la
+     pantalla: NO se guarda hasta que la persona toca un círculo (§6). */
+  const [propuesta, setPropuesta] = useState(null);
+
   /* El registro: mapa por fecha, leído del dispositivo una sola vez. */
   const [entries, setEntries] = useState(() => {
     const guardado = loadMoodLog();
@@ -59,6 +64,9 @@ export function useNadie({ initialScreen = 'onboarding', seedDemo = false, llm }
   // dependencia, igual que pausedRef con `paused`.
   const entriesRef = useRef(entries);
   entriesRef.current = entries;
+
+  const propuestaRef = useRef(propuesta);
+  propuestaRef.current = propuesta;
 
   // speakReply es async: cuando resuelve, `turns` y `convo` ya cambiaron.
   const turnsRef = useRef(turns);
@@ -192,22 +200,36 @@ export function useNadie({ initialScreen = 'onboarding', seedDemo = false, llm }
     setExchange(0);
     setPaused(false);
     setRated(false);
+    setPropuesta(null);
     after(420, () => startListening(true));
   }, [after, clearTimers, startListening]);
 
   const endSession = useCallback(() => {
     clearTimers();
     generacion.current += 1; // "Terminar" también corta lo que esté en vuelo
+    const mia = generacion.current;
+    const dicho = turnsRef.current;
     setConvo('idle');
     setPaused(false);
+    setPropuesta(null);
     setScreen('cierre');
+
+    /* La propuesta se pide DESPUÉS de mostrar el cierre, nunca antes: la
+       pantalla no puede quedarse esperando a un modelo que tarda. Si llega,
+       resalta un círculo; si no llega, la pantalla es la de siempre. */
+    proponerCheckIn({ puerto: puerto.current, turnos: dicho }).then((p) => {
+      if (mia !== generacion.current) return; // ya empezó otra sesión
+      if (p) setPropuesta(p);
+    });
   }, [clearTimers]);
 
   /* El usuario califica su día. Solo aquí se escribe el ánimo — la app nunca
      lo decide por él. Volver a calificar el mismo día pisa el valor anterior:
      el copy pregunta "¿cómo te sientes ahora?", así que vale la última. */
   const rateToday = useCallback((score) => {
-    const next = upsertEntry(entriesRef.current, dateKey(), { score });
+    /* `source` distingue lo que eligió la persona de lo que confirmó del modelo,
+       y solo es 'ai-confirmed' si tocó JUSTO el círculo sugerido. */
+    const next = upsertEntry(entriesRef.current, dateKey(), entradaDeCheckIn(score, propuestaRef.current));
     setEntries(next);
     saveMoodLog(next);
     setRated(true);
@@ -229,6 +251,7 @@ export function useNadie({ initialScreen = 'onboarding', seedDemo = false, llm }
     setTurns([]);
     setExchange(0);
     setRated(false);
+    setPropuesta(null);
   }, []);
 
   const monthValues = useMemo(() => lastNDays(entries, VENTANA_DIAS), [entries]);
@@ -269,6 +292,8 @@ export function useNadie({ initialScreen = 'onboarding', seedDemo = false, llm }
     },
     mood: {
       weekValues, monthValues, today, todayNote, rated,
+      /* El círculo que el modelo sugiere, para que Closing lo resalte. */
+      propuesta: propuesta ? propuesta.paso : null,
       rateToday, setTodayNote, clearHistory,
       noteMaxLength: NOTA_MAX,
     },

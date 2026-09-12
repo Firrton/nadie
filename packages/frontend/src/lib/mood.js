@@ -62,3 +62,25 @@ export const RATING_STEPS = [
   { score: 7, label: 'Arriba' },
   { score: 9, label: 'Muy arriba' },
 ];
+
+/* El paso de RATING_STEPS más cercano a un puntaje cualquiera.
+
+   Hace falta porque el modelo propone en la escala COMPLETA (1–10) y los
+   círculos son cinco. Un 6 propuesto no tiene círculo propio.
+
+   LOS EMPATES VAN HACIA EL NEUTRO, y no es un detalle de redondeo: un 2 está a
+   la misma distancia del 1 que del 3, y elegir el 1 sería empujar a la persona
+   a un extremo por una lectura de la que el propio modelo no está seguro. La
+   app no amplifica lo que no sabe. */
+export function pasoMasCercano(score) {
+  if (typeof score !== 'number' || !Number.isFinite(score)) return null;
+
+  return RATING_STEPS.reduce((mejor, paso) => {
+    const d = Math.abs(paso.score - score);
+    const dMejor = Math.abs(mejor.score - score);
+    if (d < dMejor) return paso;
+    if (d > dMejor) return mejor;
+    // Empate: gana el que esté más cerca del neutro.
+    return Math.abs(paso.score - MOOD_NEUTRAL) < Math.abs(mejor.score - MOOD_NEUTRAL) ? paso : mejor;
+  });
+}

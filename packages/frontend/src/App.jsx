@@ -63,6 +63,7 @@ export default function App() {
           weekValues={n.mood.weekValues}
           rated={n.mood.rated}
           onRate={n.mood.rateToday}
+          propuesta={n.mood.propuesta}
           note={n.mood.todayNote}
           onNoteChange={n.mood.setTodayNote}
           noteMaxLength={n.mood.noteMaxLength}

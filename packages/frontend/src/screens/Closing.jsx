@@ -68,6 +68,9 @@ function NoteField({ value, onChange, maxLength }) {
 export default function Closing({
   exchange, weekValues, rated, onRate, onHome, onOpenJourney,
   note = '', onNoteChange, noteMaxLength = 500, showTherapistNote = true,
+  /* Puntaje del círculo que el modelo sugiere, o null. Se RESALTA, no se
+     selecciona: hasta que la persona toca, no hay registro (§6). */
+  propuesta = null,
 }) {
   const summary = exchange <= 1
     ? 'Hablaste poco, pero lo dijiste en voz alta. Con eso alcanza por hoy.'
@@ -103,6 +106,13 @@ export default function Closing({
                     width: 48, height: 48, borderRadius: 'var(--radius-full)',
                     background: moodTint(s.score),
                     border: '1px solid var(--border-1)',
+                    /* Anillo por fuera y no un borde más grueso: cambiar el
+                       grosor mueve los cinco círculos medio píxel y se nota.
+
+                       PENDIENTE: el equivalente para lector de pantalla necesita
+                       una palabra que no puedo inventar — el copy del proyecto
+                       es final. Hoy la sugerencia se ve y no se oye. */
+                    boxShadow: s.score === propuesta ? '0 0 0 1.5px var(--accent-a55)' : 'none',
                     cursor: 'pointer', padding: 0,
                     transition: 'border-color var(--dur-1) var(--ease-out), transform var(--dur-1) var(--ease-out)',
                   }}
