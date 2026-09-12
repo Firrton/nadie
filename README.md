@@ -12,6 +12,7 @@ An emotional companion that runs on your device, remembers what you tell it, and
 | Live app | `TODO_SUNDAY_APP_URL` |
 | Architecture | [docs/ARQUITECTURA.MD](docs/ARQUITECTURA.MD) |
 | Development rules | [docs/REGLAS.md](docs/REGLAS.md) |
+| Backend plan | [docs/PLAN_BACKEND.md](docs/PLAN_BACKEND.md) |
 
 ---
 
@@ -100,6 +101,7 @@ packages/
 docs/
   ARQUITECTURA.MD   Full design
   REGLAS.md         Development rules and invariants
+  PLAN_BACKEND.md   Sequential backend work units and acceptance criteria
 ```
 
 **Dependency rule:** `ui` and `clinician` import `core` only. `core` imports contract ABIs only. The UI never touches crypto, viem, or WebLLM directly. If a screen needs something, add a method to `core`.

@@ -10,7 +10,7 @@ Este archivo vive en `docs/REGLAS.md`. El agente de código lo lee antes de cada
 
 1. **Todo el código se escribe desde cero en este repositorio.** No se copian componentes, estilos, assets, configuraciones ni lógica desde otros proyectos.
 2. El repositorio usa licencia **MIT**.
-3. `README.md`, `docs/ARQUITECTURA.MD` y este archivo son las fuentes de verdad antes de implementar.
+3. `README.md`, `docs/ARQUITECTURA.MD` y este archivo son las fuentes de verdad antes de implementar. Para tareas de backend también aplica `docs/PLAN_BACKEND.md`.
 4. Cada cambio se desarrolla en una rama aislada asignada por el orquestador y se revisa antes de integrarse.
 
 **Regla dura:** no se hereda código de Susurro ni de ningún otro repositorio.
@@ -49,6 +49,7 @@ packages/
 docs/
   ARQUITECTURA.MD
   REGLAS.md (este archivo)
+  PLAN_BACKEND.md
 ```
 
 **Dependencias permitidas (flecha = puede importar):**
@@ -147,7 +148,7 @@ Cada punto de control es una pregunta de sí o no. Si la respuesta es no, se rec
 ## 9. Cómo trabajar con el agente de código
 
 - Una tarea, un paquete, un objetivo. Nada de "construye la app".
-- El agente lee `docs/ARQUITECTURA.MD` y este archivo antes de cada tarea.
+- El agente lee `docs/ARQUITECTURA.MD` y este archivo antes de cada tarea. Para backend también lee `docs/PLAN_BACKEND.md`.
 - **Una rama por unidad de trabajo.** El orquestador indica la rama base, el nombre y el alcance antes de cada implementación.
 - El agente nunca crea, cambia, mezcla, rebasa ni elimina ramas salvo orden explícita del orquestador.
 - Una rama contiene un solo resultado revisable. Código, pruebas y documentación necesaria viajan juntos.
