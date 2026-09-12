@@ -1,5 +1,6 @@
 import { describe, expect, it, vi } from 'vitest';
 import { EMOTION_LABELS } from '@nadie/core';
+import { DEMO_REPLIES, DEMO_USER_LINES } from '../../data/content.js';
 import { MODELO_POR_DEFECTO, crearWebLLM } from './webllm.js';
 import { SISTEMA, armarMensajes, armarMensajesDeExtraccion } from './prompt.js';
 
@@ -50,14 +51,33 @@ describe('armarMensajes', () => {
   it('saca el `at` antes de mandarlo al modelo', () => {
     const out = armarMensajes([{ role: 'user', content: 'hola', at: 1789000000 }], []);
 
-    expect(out[1]).toEqual({ role: 'user', content: 'hola' });
+    expect(out[out.length - 1]).toEqual({ role: 'user', content: 'hola' });
   });
 
   it('pliega el contexto DENTRO del sistema, no como turnos', () => {
     const out = armarMensajes([{ role: 'user', content: 'hola', at: 1 }], ['le cuesta dormir']);
 
-    expect(out).toHaveLength(2); // sistema + el turno, nada más
+    // sistema + los ejemplos + el turno: el contexto NO suma un turno propio
+    expect(out.filter((m) => m.content === 'le cuesta dormir')).toHaveLength(0);
     expect(out[0].content).toContain('le cuesta dormir');
+  });
+
+  /* La palanca más fuerte que existe en un modelo chico: mostrarle cómo suena la
+     respuesta correcta pesa más que describírsela. Y sale de content.js, escrito
+     por marca — el banco no puede inventar la voz del producto. */
+  it('muestra ejemplos de la voz de Nadie, sacados del copy aprobado', () => {
+    const out = armarMensajes([{ role: 'user', content: 'hola', at: 1 }], []);
+    const asistente = out.filter((m) => m.role === 'assistant').map((m) => m.content);
+
+    expect(asistente.length).toBeGreaterThan(0);
+    asistente.forEach((c) => expect(DEMO_REPLIES).toContain(c));
+    expect(out.filter((m) => m.role === 'user').map((m) => m.content)).toContain(DEMO_USER_LINES[0]);
+  });
+
+  it('los ejemplos van ANTES de lo que dijo la persona, no después', () => {
+    const out = armarMensajes([{ role: 'user', content: 'lo real', at: 1 }], []);
+
+    expect(out[out.length - 1].content).toBe('lo real');
   });
 
   it('no ensucia el sistema cuando no hay contexto', () => {
@@ -65,10 +85,25 @@ describe('armarMensajes', () => {
     expect(armarMensajes([], ['   ', null])[0].content).toBe(SISTEMA);
   });
 
-  it('el prompt prohíbe explícitamente diagnosticar y aconsejar salud', () => {
-    expect(SISTEMA).toContain('No diagnosticas');
-    expect(SISTEMA).toContain('No das consejos de salud');
-    expect(SISTEMA).toContain('No desalientas la ayuda profesional');
+  /* Los límites siguen enteros después de reescribir el prompt en positivo.
+     Están al final y dicen qué HACER, pero siguen estando. */
+  it('el prompt mantiene el límite de diagnóstico, tratamiento y medicación', () => {
+    expect(SISTEMA).toContain('diagnóstico');
+    expect(SISTEMA).toContain('tratamiento');
+    expect(SISTEMA).toContain('medicamento');
+    expect(SISTEMA).toContain('lo ve alguien de salud');
+  });
+
+  it('el prompt no desalienta la ayuda profesional', () => {
+    expect(SISTEMA).toContain('La ayuda profesional siempre te');
+  });
+
+  /* El contrapeso directo al fallo medido: 9 de 9 respuestas se iban del rol.
+     Si alguien saca esta frase, que se entere acá. */
+  it('el prompt dice explícitamente que un desahogo no es una emergencia', () => {
+    expect(SISTEMA).toContain('No los tratas como una');
+    expect(SISTEMA).toContain('emergencia');
+    expect(SISTEMA).toContain('no mandas a la persona a otro lado');
   });
 });
 
@@ -181,7 +216,7 @@ describe('chat', () => {
     expect(pedido.stream).toBe(false);
     expect(pedido.messages[0].role).toBe('system');
     expect(pedido.messages[0].content).toContain('le cuesta dormir');
-    expect(pedido.messages[1]).toEqual({ role: 'user', content: 'hoy pesó' });
+    expect(pedido.messages[pedido.messages.length - 1]).toEqual({ role: 'user', content: 'hoy pesó' });
   });
 
   it('una respuesta vacía es un error, no un turno en blanco', async () => {
