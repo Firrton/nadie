@@ -2,7 +2,11 @@
 <html lang="es">
   <head>
     <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <!-- viewport-fit=cover: necesario para que env(safe-area-inset-*) devuelva algo.
+         interactive-widget=resizes-content: al abrir el teclado el viewport se
+         achica en vez de quedar tapado. El shell mide 100dvh y no scrollea, asi
+         que sin esto el campo de texto queda debajo del teclado. -->
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, interactive-widget=resizes-content" />
     <meta name="theme-color" content="#0e0d0c" />
     <title>nadie</title>
     <link rel="icon" href="/logo-nadie.png" />

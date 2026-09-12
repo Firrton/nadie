@@ -110,6 +110,26 @@ export function useNadie({ initialScreen = 'onboarding', seedDemo = false } = {}
   const stopListeningRef = useRef(stopListening);
   stopListeningRef.current = stopListening;
 
+  /* Camino de TEXTO. El README (§1.1 F1) pone el texto como requisito central y
+     la voz como opcional, y el plan de 48h recorta la voz antes que casi todo:
+     esto tiene que funcionar sin micrófono, sin permisos y sin que salga un
+     byte del dispositivo. Es el nivel 1 del router, el que corre con WebLLM.
+
+     Escribir interrumpe lo que esté pasando — clearTimers corta el guion de
+     demo a mitad de camino, igual que hablarle encima a alguien. La excepción
+     es mientras nadie habla: ahí la respuesta a medias se perdería. */
+  const canSend = !paused && convo !== 'speaking';
+
+  const pushUserTurn = useCallback((text) => {
+    const dicho = text.trim();
+    if (!dicho) return;
+    clearTimers();
+    setLive('');
+    setTurns((t) => [...t, { who: 'tú', text: dicho }]);
+    setConvo('processing');
+    after(1000, speakReply);
+  }, [after, clearTimers, speakReply]);
+
   const startSession = useCallback((heldMs) => {
     if (heldMs != null && heldMs < 250) return; // un toque corto no abre sesión
     clearTimers();
@@ -189,6 +209,8 @@ export function useNadie({ initialScreen = 'onboarding', seedDemo = false } = {}
       togglePause: () => setPaused((p) => !p),
       hold: () => { if (convo === 'idle' && !paused) startListening(false); },
       release: () => stopListening(),
+      send: pushUserTurn,
+      canSend,
       start: startSession,
       end: endSession,
     },

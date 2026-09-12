@@ -1,13 +1,32 @@
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { TalkButton } from '../components/TalkButton.jsx';
+import { Icon } from '../components/Icon.jsx';
 import { Lock, Pause, Play, Stop } from '../components/Glyphs.jsx';
 
 /* Conversación activa. El orbe lleva el estado (idle / listening / processing /
    speaking); la transcripción es secundaria y va en tipografía distinta según
-   quién habla: sans para el usuario, serif para nadie. */
+   quién habla: sans para el usuario, serif para nadie.
+
+   Hay DOS formas de decir algo: mantener presionado el orbe, o escribir. El
+   texto no es un accesorio — es el camino que funciona sin micrófono y sin
+   permisos, y el único que queda si la voz no llega. El orbe sigue siendo el
+   protagonista; el campo va debajo, callado. */
 
 export default function Conversation({ session }) {
   const scroller = useRef(null);
+  const campo = useRef(null);
+  const [borrador, setBorrador] = useState('');
+
+  /* El teclado achica el viewport (ver interactive-widget en index.html), y eso
+     cambia el alto de la transcripción sin que haya un turno nuevo. Sin esto,
+     escribir te deja mirando el medio de la conversación en vez del final. */
+  useEffect(() => {
+    const el = scroller.current;
+    if (!el || typeof ResizeObserver === 'undefined') return undefined;
+    const ro = new ResizeObserver(() => { el.scrollTop = el.scrollHeight; });
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, []);
   useEffect(() => {
     const el = scroller.current;
     if (el) el.scrollTop = el.scrollHeight;
@@ -23,6 +42,15 @@ export default function Conversation({ session }) {
 
   const speaking = session.raw === 'speaking';
   const empty = session.turns.length === 0 && !session.live;
+  const hayTexto = borrador.trim().length > 0;
+
+  const enviar = (e) => {
+    e.preventDefault();
+    if (!hayTexto || !session.canSend) return;
+    session.send(borrador);
+    setBorrador('');
+    if (campo.current) campo.current.focus(); // seguir escribiendo sin re-tocar
+  };
 
   return (
     <div style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
@@ -56,6 +84,30 @@ export default function Conversation({ session }) {
           onHoldStart={session.hold}
           onHoldEnd={session.release}
         />
+        <form onSubmit={enviar} style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-2)', width: '100%' }}>
+          <input
+            ref={campo}
+            className="n-field"
+            type="text"
+            value={borrador}
+            onChange={(e) => setBorrador(e.target.value)}
+            disabled={!session.canSend}
+            placeholder="O escríbelo"
+            aria-label="Escribe lo que quieras decir"
+            enterKeyHint="send"
+            autoComplete="off"
+          />
+          <button
+            type="submit"
+            className="n-btn n-btn--secondary"
+            disabled={!hayTexto || !session.canSend}
+            aria-label="Enviar"
+            style={{ width: 'var(--hit-min)', height: 'var(--hit-min)', padding: 0, borderRadius: 'var(--radius-full)', flex: 'none' }}
+          >
+            <Icon name="chevron-right" size={18} />
+          </button>
+        </form>
+
         <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-3)' }}>
           <button
             type="button"
