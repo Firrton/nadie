@@ -1,0 +1,22 @@
+{
+  "name": "@nadie/gateway",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Nadie encrypted package store skeleton. Behavior arrives in Goal 7.",
+  "license": "MIT",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    }
+  },
+  "files": ["dist"],
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "scripts": {
+    "build": "tsc -b",
+    "test": "node --test",
+    "typecheck": "tsc -b --noEmit false && tsc --noEmit -p tsconfig.json"
+  }
+}

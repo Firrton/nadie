@@ -1,0 +1,22 @@
+{
+  "name": "@nadie/relayer",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Nadie signed meta-transaction relayer skeleton. Behavior arrives in Goal 8.",
+  "license": "MIT",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    }
+  },
+  "files": ["dist"],
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "scripts": {
+    "build": "tsc -b",
+    "test": "node --test",
+    "typecheck": "tsc -b --noEmit false && tsc --noEmit -p tsconfig.json"
+  }
+}

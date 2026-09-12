@@ -10,9 +10,9 @@ An emotional companion that runs on your device, remembers what you tell it, and
 |---|---|
 | Demo video | `TODO_SUNDAY_VIDEO_URL` |
 | Live app | `TODO_SUNDAY_APP_URL` |
-| Architecture | [docs/ARQUITECTURA.md](docs/ARQUITECTURA.md) |
+| Architecture | [docs/ARQUITECTURA.MD](docs/ARQUITECTURA.MD) |
 | Development rules | [docs/REGLAS.md](docs/REGLAS.md) |
-| Español | [README.es.md](README.es.md) |
+| Backend plan | [docs/PLAN_BACKEND.md](docs/PLAN_BACKEND.md) |
 
 ---
 
@@ -26,9 +26,9 @@ Existing mental health apps ask for your email, your phone number, and your trus
 
 ## What Nadie does
 
-- **Listens on your device.** The model runs in your browser. In private mode the app makes zero network requests, and there is a test that proves it.
+- **Listens on your device.** The model runs in your browser. After the model and application assets are cached, a complete private session makes zero outbound network requests, and there is a test that proves it.
 - **Remembers, and shows you what it remembers.** Mood check-ins, session summaries, and the things that matter to you build a picture over time. You can read, edit, or delete any of it.
-- **Walks you to a human.** When you choose to, Nadie packages a summary, you sign it, and a verified psychologist can open it for a limited time. You see every access. You can revoke.
+- **Walks you to a human.** When you choose to, Nadie packages a summary, you sign it, and a verified psychologist can open it for a limited time. You see the first opening. You can revoke.
 
 Nadie does not diagnose, does not treat, and does not replace professional care.
 
@@ -37,7 +37,7 @@ Nadie does not diagnose, does not treat, and does not replace professional care.
 Consent is the whole product, so consent cannot be a row in our database.
 
 - **The grant is a signature the user made.** Not a record we wrote about them. We cannot forge it.
-- **The access log only grows, and the user reads it.** We cannot quietly delete an access that embarrasses us.
+- **The first-opening log only grows, and the user reads it.** We cannot quietly delete the recorded opening.
 - **The gateway does not decide.** It asks a public contract whether a package may be released. Compromise our server and the attacker still cannot mint a valid consent.
 
 We call this the **2-of-2**: the AI prepares, the human signs, and nothing leaves without both.
@@ -48,7 +48,7 @@ We call this the **2-of-2**: the AI prepares, the human signs, and nothing leave
 |---|---|
 | **Local-first software** | Conversation, memory, and charts live on the device and work offline |
 | **Encrypted storage** | Client-side AES-GCM vault; shared packages are end-to-end encrypted; deletion by key destruction |
-| **TEE with attestation** | Fallback inference in a confidential enclave for devices without a capable GPU |
+| **TEE with attestation** | Post-core fallback inference in a confidential enclave for devices without a capable GPU |
 | **ZK** (stretch) | Anonymous session vouchers, so a student can prove enrollment without their university learning they sought help |
 
 ## What is on-chain, and what never is
@@ -58,7 +58,7 @@ We call this the **2-of-2**: the AI prepares, the human signs, and nothing leave
 | Conversations, memory, mood history, summaries | **Never.** Not even encrypted |
 | Consent grant | Pseudonym, professional address, package hash, scope, expiry |
 | Professional credential | Address, encryption public key, validity |
-| Access and revocation | Events with timestamps |
+| First opening and revocation | Events with timestamps |
 
 The chain is the notary. It is not the vault.
 
@@ -72,7 +72,7 @@ pnpm test:privacy
 
 | # | Claim | Test |
 |---|---|---|
-| 1 | Private mode makes no network calls | `no-network.test.ts` |
+| 1 | A private session makes no outbound network calls after assets and model are cached | `no-network.test.ts` |
 | 2 | Nothing readable is persisted to disk | `vault-opaque.test.ts` |
 | 3 | Encrypt, wrap, unwrap, decrypt returns the original | `envelope-roundtrip.test.ts` |
 | 4 | The on-chain hash is of the ciphertext, never the plaintext | `hash-is-ciphertext.test.ts` |
@@ -82,7 +82,11 @@ pnpm test:privacy
 
 ## State of the build
 
-`TODO_SUNDAY` — fill in honestly before submitting. Working / mocked / roadmap, one line each.
+- **Working:** architecture and development specifications.
+- **Mocked:** none yet.
+- **Roadmap:** application implementation, contracts, services, deployment, and demo.
+
+Update this section as each implementation branch is reviewed and merged.
 
 ## Repo map
 
@@ -90,21 +94,21 @@ pnpm test:privacy
 packages/
   contracts/   ProfessionalRegistry, ConsentRegistry (Solidity, Foundry)
   core/        Keys, vault, LLM ports, memory, insights, consent. No React.
-  ui/          React app. Shell inherited from Susurro, five new screens.
+  ui/          React app built from scratch: chat and five product screens.
   gateway/     Encrypted blob store, releases only on a valid on-chain grant
   relayer/     Submits signed meta-transactions, pays gas
   clinician/   Professional portal: open, decrypt, reply
 docs/
-  ARQUITECTURA.md   Full design
+  ARQUITECTURA.MD   Full design
   REGLAS.md         Development rules and invariants
-  PRIOR_WORK.md     What is inherited, what is new
+  PLAN_BACKEND.md   Sequential backend work units and acceptance criteria
 ```
 
 **Dependency rule:** `ui` and `clinician` import `core` only. `core` imports contract ABIs only. The UI never touches crypto, viem, or WebLLM directly. If a screen needs something, add a method to `core`.
 
 ## Architecture in one paragraph
 
-A PWA holds the user's keys and an encrypted IndexedDB vault. A compute router sends inference to WebLLM in the browser by default, to an attested TEE when the device cannot handle it, and to ElevenLabs only if the user turns voice on. Sharing is a 2-of-2: the local model drafts a summary, the user approves and signs an EIP-712 consent, a relayer posts it, and a gateway releases the encrypted package to a professional whose credential the chain says is valid. Full detail in [docs/ARQUITECTURA.md](docs/ARQUITECTURA.md).
+A PWA holds the user's keys and an encrypted IndexedDB vault. The core MVP sends inference to WebLLM in the browser. After that path and the sharing flow are stable, an attested TEE may be added as a fallback and ElevenLabs may be enabled only when the user opts into voice. Sharing is a 2-of-2: the local model drafts a summary, the user approves and signs an EIP-712 consent, a relayer posts it, and a gateway releases the encrypted package to a professional whose credential the chain says is valid. Full detail in [docs/ARQUITECTURA.MD](docs/ARQUITECTURA.MD).
 
 ## Stack
 
@@ -122,22 +126,20 @@ pnpm dev                    # app on :5173, gateway on :8787, relayer on :8788
 
 First run downloads the model into the browser cache. This takes a few minutes and only happens once. Use the seed button in Settings to load 21 days of synthetic check-ins.
 
-The app ships with a capability check. Without WebGPU it offers enclave mode instead of failing.
+The core MVP targets a WebGPU-capable demo device. Enclave fallback remains behind a feature flag and is implemented only after the local path and sharing flow are stable.
 
 ## Deployed contracts
 
 | Contract | Network | Address |
 |---|---|---|
-| ProfessionalRegistry | Base Sepolia | `TODO_DEPLOY_ADDRESS` |
-| ConsentRegistry | Base Sepolia | `TODO_DEPLOY_ADDRESS` |
 | ProfessionalRegistry | HashKey Chain Testnet (133) | `TODO_DEPLOY_ADDRESS` |
 | ConsentRegistry | HashKey Chain Testnet (133) | `TODO_DEPLOY_ADDRESS` |
 
-Same bytecode on both. Base Sepolia is the reference deployment; the HashKey deployment enables the optional KYC-SBT adapter for professional verification.
+HashKey Chain Testnet is the reference deployment so the project can qualify for the HashKey track. Additional EVM deployments are roadmap work.
 
-## Prior work and attribution
+## Original work
 
-The UI shell, design tokens, and chat components are inherited from **Susurro**, an earlier project by the same author, imported unmodified in the first commit and confined to `packages/ui`. Everything else in this repository was written during the buildathon. See [docs/PRIOR_WORK.md](docs/PRIOR_WORK.md) for the exact boundary.
+No code, components, design tokens, or application assets are inherited from another repository. The Nadie implementation is built from scratch in this repository during the buildathon.
 
 ## Beyond the hackathon
 
