@@ -33,29 +33,39 @@ const LIBS = LIBS_HOST + 'main/web-llm-models/v0_2_84/base/';
    sobre con quién habla la app, que es lo que el test tiene que poder afirmar. */
 export const HOSTS_DE_MODELO = [HF, LIBS_HOST];
 
-/* Ordenada de más capaz a más liviana. `vramMB` sale del `vram_required_MB` que
+/* LA ESCALERA SON LOS MODELOS QUE ESTAMOS DISPUESTOS A SERVIR, no el catálogo de
+   lo que existe. Un peldaño entra acá cuando lo medimos con el banco.
+
+   Ordenada de más capaz a más liviana. `vramMB` sale del `vram_required_MB` que
    declara WebLLM en su config.ts, no de una estimación nuestra. */
 export const ESCALERA = [
-  {
-    id: 'Llama-3.2-3B-Instruct-q4f16_1-MLC',
-    vramMB: 2263.69,
-    lib: 'Llama-3.2-3B-Instruct-q4f16_1_cs1k-webgpu.wasm',
-    peldano: 'escritorio',
-    nota: 'Candidato principal: Meta entrenó 3.2 con el español entre sus idiomas oficiales.',
-  },
   {
     id: 'Qwen2.5-1.5B-Instruct-q4f16_1-MLC',
     vramMB: 1629.75,
     lib: 'Qwen2-1.5B-Instruct-q4f16_1_cs1k-webgpu.wasm',
-    peldano: 'intermedio',
-    nota: 'Equipos modestos. Más fuerte en inglés y chino que en español: hay que escucharlo.',
+    peldano: 'escritorio',
+    nota: 'El elegido. Único con 3/3 en extracción de memoria y 3.5x más rápido que el 1B.',
   },
   {
     id: 'Llama-3.2-1B-Instruct-q4f16_1-MLC',
     vramMB: 879.04,
     lib: 'Llama-3.2-1B-Instruct-q4f16_1_cs1k-webgpu.wasm',
     peldano: 'celular',
-    nota: 'ARQUITECTURA §4.3 avisa que por debajo de 2B alucinan: tareas acotadas o nada.',
+    nota: 'Último recurso. Medido: dice incoherencias y llegó a sugerir un remedio casero.',
+  },
+];
+
+/* Bajado a medias o sin medir: NO se sirve hasta pasar por el banco. Vive acá y
+   no en la escalera porque poner un modelo sin probar en producción es
+   exactamente lo que el banco existe para evitar. El 3B de Llama era el
+   candidato original por tabla; nunca se llegó a correr. */
+export const SIN_PROBAR = [
+  {
+    id: 'Llama-3.2-3B-Instruct-q4f16_1-MLC',
+    vramMB: 2263.69,
+    lib: 'Llama-3.2-3B-Instruct-q4f16_1_cs1k-webgpu.wasm',
+    peldano: 'escritorio',
+    nota: 'Sin medir. No entra junto a los otros dos en la cuota del navegador (3470 MB).',
   },
 ];
 

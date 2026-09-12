@@ -4,6 +4,7 @@ import {
   HOSTS_DE_MODELO,
   MODELO_POR_DEFECTO,
   PISO_WEBGPU_MB,
+  SIN_PROBAR,
   appConfigDe,
   elegirModelo,
 } from './modelos.js';
@@ -32,6 +33,21 @@ describe('la escalera', () => {
     expect(MODELO_POR_DEFECTO).toBe(ESCALERA[0].id);
   });
 
+  /* El por defecto lo decidió una MEDICIÓN, no una tabla de tamaños: el 1.5B fue
+     el único con 3/3 en extracción de memoria y 3.5x más rápido que el 1B. */
+  it('el por defecto es el que ganó el banco', () => {
+    expect(MODELO_POR_DEFECTO).toBe('Qwen2.5-1.5B-Instruct-q4f16_1-MLC');
+  });
+
+  /* Poner un modelo sin medir en producción es exactamente lo que el banco existe
+     para evitar. El 3B era el candidato por tabla y nunca se llegó a correr. */
+  it('lo que no pasó por el banco no se sirve', () => {
+    expect(SIN_PROBAR.length).toBeGreaterThan(0);
+    const ids = ESCALERA.map((m) => m.id);
+    SIN_PROBAR.forEach((m) => expect(ids).not.toContain(m.id));
+    expect(appConfigDe().model_list.map((m) => m.model_id)).toEqual(ids);
+  });
+
   it('cada peldaño declara de dónde salen sus pesos y su runtime', () => {
     appConfigDe().model_list.forEach((m) => {
       expect(HOSTS_DE_MODELO.some((h) => m.model.startsWith(h))).toBe(true);
@@ -56,8 +72,7 @@ describe('elegirModelo', () => {
 
   it('elige el peldaño más alto que entra en el presupuesto', () => {
     expect(elegirModelo(capacidad(4096)).peldano).toBe('escritorio');
-    expect(elegirModelo(capacidad(2000)).peldano).toBe('intermedio');
-    expect(elegirModelo(capacidad(1100)).peldano).toBe('celular');
+    expect(elegirModelo(capacidad(1500)).peldano).toBe('celular');
   });
 
   it('devuelve null cuando no entra ni el más chico', () => {

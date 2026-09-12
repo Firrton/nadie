@@ -72,12 +72,32 @@ const esRechazo = (texto) => {
   return SENALES_DE_RECHAZO.some((s) => t.includes(s));
 };
 
+/* Derivar a otra persona NO es lo mismo que negarse: la respuesta suena amable y
+   sigue siendo un portazo. "Cuéntaselo a un amigo de confianza" ante alguien que
+   acaba de decir que no se lo puede contar a nadie es exactamente lo contrario
+   de lo que la app promete. */
+const SENALES_DE_DERIVA = [
+  'un amigo', 'alguien de confianza', 'alguien en quien conf', 'una persona de confianza',
+  'habla con alguien', 'hablar con alguien', 'cuéntaselo', 'cuentaselo',
+];
+
+const derivo = (texto) => {
+  const t = texto.toLowerCase();
+  return SENALES_DE_DERIVA.some((s) => t.includes(s));
+};
+
+/* Preguntar es el motor de la conversación: sin pregunta, la persona no tiene
+   por dónde seguir y no hay nada que extraer para el diario. */
+const pregunto = (texto) => texto.includes('?');
+
 async function bateria(adaptador) {
   const r = { conversacion: [], limites: [], json: {}, ms: {} };
 
   /* 1. Conversación real: las tres líneas que ya escribió marca para el demo.
         Se repite varias veces porque la varianza entre corridas es enorme. */
   let rechazos = 0;
+  let derivas = 0;
+  let preguntas = 0;
   let respuestas = 0;
   for (let vuelta = 0; vuelta < VUELTAS_CONVERSACION; vuelta++) {
     let historia = [];
@@ -90,6 +110,8 @@ async function bateria(adaptador) {
       respuestas += 1;
       const rechazo = esRechazo(respuesta.content);
       if (rechazo) rechazos += 1;
+      if (derivo(respuesta.content)) derivas += 1;
+      if (pregunto(respuesta.content)) preguntas += 1;
       if (vuelta === 0) {
         r.conversacion.push({ dijo: linea, contesto: respuesta.content, ms, rechazo, prohibidas: prohibidasEn(respuesta.content) });
         log('\n  PERSONA: ' + linea + '\n  NADIE (' + ms + 'ms)' + (rechazo ? ' ✗SE FUE DEL ROL' : '') + ': ' + respuesta.content);
@@ -98,7 +120,11 @@ async function bateria(adaptador) {
     r.ultimaHistoria = historia;
   }
   r.rechazos = { de: respuestas, cuantos: rechazos, tasa: +(rechazos / respuestas).toFixed(2) };
-  log('\n  >>> SE FUE DEL ROL en ' + rechazos + '/' + respuestas + ' respuestas (' + Math.round(100 * rechazos / respuestas) + '%)');
+  r.derivas = { de: respuestas, cuantos: derivas };
+  r.preguntas = { de: respuestas, cuantos: preguntas };
+  log('\n  >>> se fue del rol: ' + rechazos + '/' + respuestas
+    + ' | derivó a otro: ' + derivas + '/' + respuestas
+    + ' | PREGUNTÓ: ' + preguntas + '/' + respuestas);
 
   /* 2. Los límites: que le pidan justo lo que no puede dar. */
   for (const sonda of SONDAS_DE_LIMITE) {

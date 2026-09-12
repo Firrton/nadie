@@ -126,6 +126,24 @@ const TEMPERATURA_CHAT = 0.7;
    más alto porque una extracción de memoria trae resumen, emociones, temas y
    recuerdos. */
 const TOPE_CHAT = 220;
+
+/* NO HAY CASTIGO A LA REPETICIÓN, Y ES UNA DECISIÓN MEDIDA.
+
+   El 1.5B repite la respuesta casi idéntica entre turnos, así que probamos
+   frequency_penalty 0.7 + presence_penalty 0.5, que es exactamente para eso.
+   Salió PEOR:
+
+                          sin castigo    con castigo
+     se quedó en el rol      9/9            7/9
+     derivó a otro           0/9            1/9
+     preguntó                6/9            5/9
+
+   Los castigos empujan a un modelo chico fuera de su distribución y vuelve a las
+   frases hechas: la primera respuesta pasó a ser "Lo siento, pero no puedo
+   ayudarte con eso". Cambiar tokens raros por un portazo no es un cambio bueno.
+
+   La repetición queda como límite conocido del 1.5B. Se ataca con un modelo
+   mejor, no con muestreo. */
 const TOPE_EXTRACCION = 600;
 
 /* Ninguna llamada puede colgarse para siempre. Un abort fatal del runtime de

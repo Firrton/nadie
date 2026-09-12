@@ -98,6 +98,44 @@ describe('armarMensajes', () => {
     expect(SISTEMA).toContain('La ayuda profesional siempre te');
   });
 
+  /* Preguntar es el motor: sin pregunta la persona no tiene por dónde seguir, y
+     sin conversación no hay nada que extraer para el diario. */
+  it('el prompt exige preguntar en TODAS las respuestas', () => {
+    expect(SISTEMA).toContain('En TODAS las respuestas, sin excepción');
+    expect(SISTEMA).toContain('Sin pregunta, la conversación se apaga');
+  });
+
+  /* Medido: repetía "¿Qué parte de eso te carga más?" palabra por palabra en dos
+     turnos seguidos. Una pregunta repetida deja de ser una pregunta. */
+  it('el prompt pide que la pregunta cambie', () => {
+    expect(SISTEMA).toContain('Cada pregunta es distinta de la anterior');
+  });
+
+  /* Medido: contestó "Estoy aquí para escucharte, Nadie" — le puso a la PERSONA
+     el nombre del producto. */
+  it('el prompt aclara de quién es el nombre', () => {
+    expect(SISTEMA).toContain('Nadie es TU nombre, no el de la persona');
+  });
+
+  /* Medido: "Siempre estás a salvo conmigo". La app no puede prometer eso. */
+  it('el prompt cierra la puerta de prometer de más', () => {
+    expect(SISTEMA).toContain('ni protegerla, ni que está a salvo');
+  });
+
+  /* Derivar suena amable y sigue siendo un portazo: "cuéntaselo a un amigo" ante
+     alguien que acaba de decir que no se lo puede contar a nadie es lo contrario
+     de lo que la app promete. */
+  it('el prompt prohíbe mandar a la persona con otro en la conversación normal', () => {
+    expect(SISTEMA).toContain('NUNCA respondes mandando a la persona con otro');
+    expect(SISTEMA).toContain('Ni con un amigo');
+  });
+
+  /* El 1B, ante la sonda de medicación, terminó sugiriendo una ducha. La regla
+     tiene que cubrir el remedio casero, no solo el medicamento con nombre. */
+  it('el prompt cierra también la puerta del remedio casero', () => {
+    expect(SISTEMA).toContain('Nunca nombras un medicamento, una dosis ni un remedio casero');
+  });
+
   /* El contrapeso directo al fallo medido: 9 de 9 respuestas se iban del rol.
      Si alguien saca esta frase, que se entere acá. */
   it('el prompt dice explícitamente que un desahogo no es una emergencia', () => {
@@ -223,6 +261,19 @@ describe('techo de tokens y timeout', () => {
 });
 
 describe('chat', () => {
+  /* Probamos frequency_penalty/presence_penalty contra la repetición del 1.5B y
+     salió PEOR: el rol cayó de 9/9 a 7/9 y volvieron los portazos. Este test fija
+     que NO se manden, para que nadie los reintroduzca creyendo que ayudan. */
+  it('no castiga la repetición: medido, empeora al modelo', async () => {
+    const { motor, adaptador } = armar(CHECKIN_VALIDO);
+    await adaptador.cargar();
+
+    await adaptador.puerto.chat([], []);
+
+    expect(motor.pedidos[0].frequency_penalty).toBeUndefined();
+    expect(motor.pedidos[0].presence_penalty).toBeUndefined();
+  });
+
   it('devuelve SOLO lo nuevo, con la forma de ChatMessage', async () => {
     vi.spyOn(Date, 'now').mockReturnValue(1789000000123);
     const { adaptador } = armar('Te escucho.');
