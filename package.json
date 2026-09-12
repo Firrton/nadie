@@ -1,0 +1,20 @@
+{
+  "name": "nadie",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Private AI for the things you can't say out loud yet.",
+  "license": "MIT",
+  "engines": {
+    "node": ">=20"
+  },
+  "packageManager": "pnpm@10.29.3",
+  "scripts": {
+    "build": "pnpm -r --if-present run build",
+    "test": "pnpm -r --if-present run test",
+    "typecheck": "pnpm -r --if-present run typecheck"
+  },
+  "devDependencies": {
+    "typescript": "5.9.3"
+  }
+}
