@@ -4,6 +4,7 @@ import {
   MemoryExtractionSchema,
   ShareSummaryDraftSchema,
 } from '@nadie/core';
+import { z } from 'zod';
 import { ahoraEnSegundos } from './messages.js';
 import { armarMensajes, armarMensajesDeExtraccion } from './prompt.js';
 import { MODELO_POR_DEFECTO } from './modelos.js';
@@ -44,6 +45,29 @@ const ESQUEMAS = {
   memory: MemoryExtractionSchema,
   'share-summary': ShareSummaryDraftSchema,
 };
+
+/* El JSON Schema que se le pasa al modelo se DERIVA de los mismos esquemas Zod
+   de core. Escribirlo a mano sería tener el contrato en dos lugares, y el día
+   que core cambie una etiqueta de emoción, el modelo seguiría proponiendo la
+   vieja sin que nada se queje.
+
+   `$schema` se saca: al decodificador solo le sirve la forma, y es ruido en el
+   prompt. Se calcula una sola vez, al importar. */
+const JSON_SCHEMAS = Object.fromEntries(
+  Object.entries(ESQUEMAS).map(([nombre, esquema]) => {
+    const { $schema, ...forma } = z.toJSONSchema(esquema);
+    return [nombre, JSON.stringify(forma)];
+  }),
+);
+
+/* Los modelos chicos devuelven el JSON envuelto en un bloque de markdown aunque
+   se les pida lo contrario — observado con el 1B: "```\n{...}\n```". Con
+   decodificación restringida por esquema no debería pasar, pero el fallback
+   cuesta cuatro líneas y evita descartar una salida que estaba bien. */
+function sinCercaDeCodigo(texto) {
+  const m = /^```(?:json)?\s*([\s\S]*?)\s*```$/.exec(texto.trim());
+  return m ? m[1] : texto;
+}
 
 /* La extracción arranca determinista. El reintento SUBE la temperatura: volver a
    pedir lo mismo con temperature 0 devuelve exactamente la misma respuesta, así
@@ -139,7 +163,13 @@ export function crearWebLLM({ crearEngine, modelo = MODELO_POR_DEFECTO, onProgre
         let crudo;
         try {
           crudo = await completar(mensajes, {
-            response_format: { type: 'json_object' },
+            /* OJO: `{ type: 'json_object' }` SOLO está roto en web-llm 0.2.85.
+               Falla con "Failed to initialize the grammar matcher ... Cannot
+               pass non-string to std::string" — el ejemplo oficial usa esa forma
+               y no anda. Con `schema` funciona, y además es mejor: el
+               decodificador queda restringido a la forma real de core en vez de
+               a "algo que sea JSON". */
+            response_format: { type: 'json_object', schema: JSON_SCHEMAS[schema] },
             temperature: TEMPERATURA_EXTRACCION[intento],
           });
         } catch (e) {
@@ -149,7 +179,7 @@ export function crearWebLLM({ crearEngine, modelo = MODELO_POR_DEFECTO, onProgre
 
         let datos;
         try {
-          datos = JSON.parse(crudo);
+          datos = JSON.parse(sinCercaDeCodigo(crudo));
         } catch (e) {
           ultimoMotivo = 'el modelo no devolvió JSON';
           continue;

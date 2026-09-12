@@ -208,8 +208,60 @@ describe('extract', () => {
 
     await adaptador.puerto.extract([], 'checkin');
 
-    expect(motor.pedidos[0].response_format).toEqual({ type: 'json_object' });
+    expect(motor.pedidos[0].response_format.type).toBe('json_object');
     expect(motor.pedidos[0].temperature).toBe(0);
+  });
+
+  /* `{ type: 'json_object' }` SOLO está roto en web-llm 0.2.85: falla con
+     "Cannot pass non-string to std::string". Con schema anda — y además restringe
+     el decodificador a la forma real de core, no a "algo que sea JSON". */
+  it('manda el esquema, porque sin esquema la 0.2.85 no sabe hacer JSON', async () => {
+    const { motor, adaptador } = armar(CHECKIN_VALIDO);
+    await adaptador.cargar();
+
+    await adaptador.puerto.extract([], 'checkin');
+
+    const enviado = motor.pedidos[0].response_format.schema;
+    expect(typeof enviado).toBe('string');
+    expect(JSON.parse(enviado)).toMatchObject({
+      type: 'object',
+      properties: { score: { type: 'integer', minimum: 1, maximum: 10 } },
+    });
+  });
+
+  /* El esquema se DERIVA de los Zod de core. Escribirlo a mano sería tener el
+     contrato en dos lugares y que se separen sin que nadie se entere. */
+  it('las etiquetas de emoción del esquema salen de core, no de una copia', async () => {
+    const { motor, adaptador } = armar(CHECKIN_VALIDO);
+    await adaptador.cargar();
+
+    await adaptador.puerto.extract([], 'checkin');
+
+    const js = JSON.parse(motor.pedidos[0].response_format.schema);
+    expect(js.properties.emotions.items.properties.label.enum).toEqual([...EMOTION_LABELS]);
+  });
+
+  it('cada esquema manda el suyo', async () => {
+    const { motor, adaptador } = armar('{"x":1}');
+    await adaptador.cargar();
+
+    await adaptador.puerto.extract([], 'memory').catch(() => {});
+    const js = JSON.parse(motor.pedidos[0].response_format.schema);
+
+    expect(Object.keys(js.properties).sort()).toEqual(
+      ['emotions', 'memories', 'pending', 'riskLevel', 'summary', 'themes'],
+    );
+  });
+
+  /* Observado con el 1B de verdad: devuelve "```\n{...}\n```" aunque se le pida
+     lo contrario. Descartar eso sería tirar una salida que estaba bien. */
+  it('acepta un JSON envuelto en un bloque de markdown', async () => {
+    const { adaptador } = armar('```json\n' + CHECKIN_VALIDO + '\n```');
+    await adaptador.cargar();
+
+    const salida = await adaptador.puerto.extract([], 'checkin');
+
+    expect(salida.score).toBe(7);
   });
 
   it('descarta lo que no cumple el esquema y reintenta una vez (REGLAS §5)', async () => {
