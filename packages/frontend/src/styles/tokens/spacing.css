@@ -21,4 +21,16 @@
   --screen-pad: 24px;    /* margen lateral estándar */
   --hit-min: 44px;       /* objetivo táctil mínimo */
   --nav-h: 64px;         /* navegación inferior */
+
+  /* Zonas seguras del dispositivo: notch, Dynamic Island, home indicator.
+     Requieren `viewport-fit=cover` en el meta viewport (ya está en index.html);
+     sin eso el navegador devuelve 0 y el contenido se mete abajo del sistema.
+
+     En un navegador de escritorio valen 0, así que el layout no cambia. Para
+     probarlos sin un teléfono, pisarlos desde la consola:
+       document.documentElement.style.setProperty('--safe-top', '59px') */
+  --safe-top: env(safe-area-inset-top, 0px);
+  --safe-bottom: env(safe-area-inset-bottom, 0px);
+  --safe-left: env(safe-area-inset-left, 0px);
+  --safe-right: env(safe-area-inset-right, 0px);
 }

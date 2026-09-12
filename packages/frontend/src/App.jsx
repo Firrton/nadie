@@ -25,6 +25,14 @@ export default function App() {
         width: '100%', maxWidth: 390, margin: '0 auto', height: '100dvh',
         background: 'var(--bg-0)', display: 'flex', flexDirection: 'column',
         overflow: 'hidden', position: 'relative',
+        /* Las zonas seguras se aplican UNA vez, acá. Con box-sizing: border-box
+           el padding se descuenta de los 100dvh, así que el área que scrollea
+           se achica sola y ninguna pantalla tiene que saber del notch. El fondo
+           de la nav es el mismo --bg-0 del shell, así que no se ve costura. */
+        paddingTop: 'var(--safe-top)',
+        paddingBottom: 'var(--safe-bottom)',
+        paddingLeft: 'var(--safe-left)',
+        paddingRight: 'var(--safe-right)',
       }}
     >
       {screen === 'onboarding' && (
