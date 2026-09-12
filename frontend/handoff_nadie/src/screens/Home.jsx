@@ -15,7 +15,9 @@ export default function Home({ weekValues, hasToday, onStart, onOpenJourney }) {
         <span className="t-logo">nadie</span>
         <span style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
           <Lock />
-          <span className="t-micro">cifrado</span>
+          {/* No decir "cifrado": el almacenamiento local es texto plano.
+              Ver el comentario de lib/storage.js. */}
+          <span className="t-micro">solo en este teléfono</span>
         </span>
       </header>
 

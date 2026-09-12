@@ -1,14 +1,26 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { DEMO_MONTH, DEMO_REPLIES, DEMO_USER_LINES, VOICES } from '../data/content.js';
+import { clearMoodLog, loadMoodLog, saveMoodLog } from '../lib/storage.js';
+import { dateKey, entriesFromSeries, lastNDays, upsertEntry } from '../lib/moodLog.js';
 
-/* Estado único de la app. Todo vive en memoria — sin localStorage, sin cuentas.
+/* Estado único de la app.
+
+   La conversación vive en memoria y muere con la sesión — a propósito: las
+   transcripciones no se guardan. Lo único que persiste es el REGISTRO DE ÁNIMO
+   (número + fecha + nota opcional), en el dispositivo, vía lib/storage.js.
+
    En producción, sustituir el guion de demo por:
      - reconocimiento de voz en el dispositivo  -> pushUserTurn(texto)
      - respuesta del modelo                     -> pushNadieTurn(texto)
-   y persistir SOLO el registro de ánimo (números + fecha) en el almacenamiento
-   cifrado del dispositivo. Nunca subir transcripciones. */
 
-export function useNadie({ initialScreen = 'onboarding' } = {}) {
+   `seedDemo` siembra el mes de ejemplo de content.js para poder revisar "Tu
+   camino" con datos. Es opt-in explícito y ESCRIBE en el almacenamiento del
+   dispositivo: no lo actives en la app real. */
+
+const VENTANA_DIAS = 28;
+const NOTA_MAX = 500;
+
+export function useNadie({ initialScreen = 'onboarding', seedDemo = false } = {}) {
   const [screen, setScreen] = useState(initialScreen);
   const [obStep, setObStep] = useState(0);
   const [under18, setUnder18] = useState(false);
@@ -22,12 +34,23 @@ export function useNadie({ initialScreen = 'onboarding' } = {}) {
   const [exchange, setExchange] = useState(0);
   const [rated, setRated] = useState(false);
 
-  const [month, setMonth] = useState(DEMO_MONTH);
-  const [today, setToday] = useState(null); // ánimo de hoy: lo pone el usuario
+  /* El registro: mapa por fecha, leído del dispositivo una sola vez. */
+  const [entries, setEntries] = useState(() => {
+    const guardado = loadMoodLog();
+    if (Object.keys(guardado).length > 0 || !seedDemo) return guardado;
+    const ayer = new Date();
+    ayer.setDate(ayer.getDate() - 1);
+    return entriesFromSeries(DEMO_MONTH, ayer);
+  });
 
   const timers = useRef([]);
   const pausedRef = useRef(false);
   pausedRef.current = paused;
+
+  // Las acciones escriben a partir del último registro sin depender de él como
+  // dependencia, igual que pausedRef con `paused`.
+  const entriesRef = useRef(entries);
+  entriesRef.current = entries;
 
   const after = useCallback((ms, fn) => { timers.current.push(setTimeout(fn, ms)); }, []);
   const clearTimers = useCallback(() => {
@@ -107,19 +130,39 @@ export function useNadie({ initialScreen = 'onboarding' } = {}) {
     setScreen('cierre');
   }, [clearTimers]);
 
-  /* El usuario califica su día. Solo aquí se escribe el ánimo. */
-  const rateToday = useCallback((value) => { setToday(value); setRated(true); }, []);
+  /* El usuario califica su día. Solo aquí se escribe el ánimo — la app nunca
+     lo decide por él. Volver a calificar el mismo día pisa el valor anterior:
+     el copy pregunta "¿cómo te sientes ahora?", así que vale la última. */
+  const rateToday = useCallback((value) => {
+    const next = upsertEntry(entriesRef.current, dateKey(), { value });
+    setEntries(next);
+    saveMoodLog(next);
+    setRated(true);
+  }, []);
+
+  /* La nota es opcional y sale del usuario, no de la transcripción. Es el dato
+     más sensible de la app: se guarda igual que el ánimo y se borra con él. */
+  const setTodayNote = useCallback((text) => {
+    const key = dateKey();
+    if (!entriesRef.current[key]) return; // sin calificar no hay día que anotar
+    const next = upsertEntry(entriesRef.current, key, { note: text.slice(0, NOTA_MAX) });
+    setEntries(next);
+    saveMoodLog(next);
+  }, []);
 
   const clearHistory = useCallback(() => {
-    setMonth(DEMO_MONTH.map(() => null));
-    setToday(null);
+    setEntries({});
+    clearMoodLog();
     setTurns([]);
     setExchange(0);
     setRated(false);
   }, []);
 
-  const monthValues = useMemo(() => [...month, today], [month, today]);
+  const monthValues = useMemo(() => lastNDays(entries, VENTANA_DIAS), [entries]);
   const weekValues = useMemo(() => monthValues.slice(-7), [monthValues]);
+  const todayEntry = entries[dateKey()];
+  const today = todayEntry ? todayEntry.value : null;
+  const todayNote = todayEntry && todayEntry.note ? todayEntry.note : '';
   const voice = VOICES.find((v) => v.id === voiceId) || VOICES[0];
 
   const previewVoice = useCallback((id) => {
@@ -149,6 +192,10 @@ export function useNadie({ initialScreen = 'onboarding' } = {}) {
       start: startSession,
       end: endSession,
     },
-    mood: { weekValues, monthValues, today, rated, rateToday, clearHistory },
+    mood: {
+      weekValues, monthValues, today, todayNote, rated,
+      rateToday, setTodayNote, clearHistory,
+      noteMaxLength: NOTA_MAX,
+    },
   };
 }

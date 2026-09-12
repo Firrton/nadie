@@ -22,7 +22,10 @@ export const DEMO_REPLIES = [
   'Para eso está este espacio. Lo dijiste, y ya no está solo en tu cabeza. Cuando quieras cerrar, aquí sigo.',
 ];
 
-/* Ánimo de demo: 27 días + hoy (null hasta que el usuario califica). */
+/* Ánimo de demo: 27 días previos a hoy. NO es el estado inicial de la app — un
+   usuario nuevo arranca con el registro vacío y "Tu camino" ya tiene copy para
+   eso. Solo se usa con useNadie({ seedDemo: true }), para revisar el diseño con
+   datos. */
 export const DEMO_MONTH = [
   0.34, 0.4, null, 0.3, 0.42, 0.38, null, 0.45, 0.5, 0.4, null, 0.36, 0.52, 0.47,
   null, 0.55, 0.48, null, 0.6, 0.52, 0.58, 0.5, null, 0.62, 0.55, 0.66, 0.6,
