@@ -1,8 +1,10 @@
 {
-  "name": "nadie-app",
-  "private": true,
+  "name": "@nadie/frontend",
   "version": "0.1.0",
+  "private": true,
   "type": "module",
+  "description": "Nadie mobile voice app. Mobile-first, dark only, Spanish.",
+  "license": "MIT",
   "scripts": {
     "dev": "vite",
     "build": "vite build",

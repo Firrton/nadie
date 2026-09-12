@@ -43,10 +43,15 @@ primitivas pero conserva los valores de `src/styles/tokens/`.
 
 ## Cómo correrlo
 
+Este paquete es parte del monorepo. Las dependencias se instalan desde la raíz:
+
 ```bash
-npm install
-npm run dev
+pnpm install
+pnpm --filter @nadie/frontend dev
 ```
+
+Los tests corren con `pnpm --filter @nadie/frontend test`, o con
+`pnpm -r run test` desde la raíz junto con el resto de los paquetes.
 
 Ábrelo en el inspector móvil (390 × 844). Para empezar en Home en vez del
 onboarding, cambia `initialScreen` en `src/App.jsx`:
@@ -302,7 +307,7 @@ de la ayuda profesional.
 ## Files
 
 ```
-handoff_nadie/
+packages/frontend/
 ├── README.md                     este documento
 ├── index.html · package.json · vite.config.js
 ├── public/logo-nadie.png
@@ -313,7 +318,7 @@ handoff_nadie/
     ├── state/useNadie.js         todo el estado
     ├── screens/                  Onboarding · Home · Conversation · Closing · Journey · Settings
     ├── components/               VoiceOrb · TalkButton · MoodCurve · WeekStrip · BottomNav · Button · Icon · Glyphs
-    ├── lib/                      mood.js · journey.js
+    ├── lib/                      mood.js · journey.js · storage.js · moodLog.js (+ tests)
     ├── data/content.js           copy, voces y datos de demo
     └── styles/                   styles.css · theme.css · tokens/ · foundations/
 ```
