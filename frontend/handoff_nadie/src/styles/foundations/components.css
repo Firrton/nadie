@@ -1,0 +1,79 @@
+/* Nadie — clases de componentes (estados hover/press/focus que el inline no cubre). */
+
+/* Botón */
+.n-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-2);
+  font-family: var(--font-sans);
+  font-weight: var(--weight-medium);
+  border: 1px solid transparent;
+  border-radius: var(--radius-full);
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  transition: background-color var(--dur-1) var(--ease-out),
+              color var(--dur-1) var(--ease-out),
+              border-color var(--dur-1) var(--ease-out),
+              transform var(--dur-1) var(--ease-out);
+}
+.n-btn:focus-visible { outline: 2px solid var(--focus-ring); outline-offset: 2px; }
+.n-btn:active { transform: scale(0.98); }
+.n-btn:disabled { opacity: 0.45; cursor: default; transform: none; }
+
+.n-btn--md { font-size: 15px; padding: 10px 20px; min-height: var(--hit-min); }
+.n-btn--lg { font-size: 16px; padding: 14px 28px; min-height: 52px; }
+.n-btn--full { width: 100%; }
+
+.n-btn--primary { background: var(--accent); color: var(--text-on-accent); }
+.n-btn--primary:hover { background: var(--accent-hover); }
+.n-btn--primary:active { background: var(--accent-press); }
+
+.n-btn--secondary { background: var(--surface-1); color: var(--text-1); border-color: var(--border-1); }
+.n-btn--secondary:hover { background: var(--surface-hover); }
+
+.n-btn--ghost { background: transparent; color: var(--text-2); }
+.n-btn--ghost:hover { color: var(--text-1); }
+
+/* Botón-orbe (mantener presionado) */
+.n-orbbtn {
+  background: none;
+  border: 0;
+  padding: 0;
+  margin: 0;
+  cursor: pointer;
+  touch-action: none;
+  -webkit-tap-highlight-color: transparent;
+  border-radius: var(--radius-full);
+  display: inline-flex;
+}
+.n-orbbtn:focus-visible { outline: 2px solid var(--focus-ring); outline-offset: 8px; }
+
+/* Navegación inferior */
+.n-nav {
+  display: flex;
+  align-items: stretch;
+  height: var(--nav-h);
+  background: var(--bg-0);
+  border-top: 1px solid var(--border-1);
+}
+.n-nav__item {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 3px;
+  background: none;
+  border: 0;
+  cursor: pointer;
+  font-family: var(--font-sans);
+  font-size: var(--text-micro-size);
+  letter-spacing: var(--tracking-micro);
+  color: var(--dot-inactive);
+  -webkit-tap-highlight-color: transparent;
+  transition: color var(--dur-1) var(--ease-out);
+}
+.n-nav__item:hover { color: var(--text-2); }
+.n-nav__item:focus-visible { outline: 2px solid var(--focus-ring); outline-offset: -2px; border-radius: var(--radius-s); }
+.n-nav__item[aria-current="true"] { color: var(--accent); }

@@ -1,0 +1,40 @@
+/* Nadie — color. Oscuro e íntimo, como luz baja en un cuarto de noche.
+   Un solo acento (ámbar cálido). Sin azules, sin pasteles, sin gradientes duros. */
+
+:root {
+  color-scheme: dark;
+
+  /* base */
+  --bg-0: #0e0d0c;            /* fondo — negro cálido, EL modo (no hay claro) */
+  --surface-1: #1b1a18;       /* superficie de tarjetas */
+  --surface-2: #2a2825;       /* superficie elevada / bordes sutiles */
+  --surface-hover: #232120;   /* hover sobre superficie */
+  --border-1: #2a2825;        /* borde estándar, siempre 1px */
+
+  --accent: #e9a05c;          /* ámbar cálido — orbe, curva de ánimo, elementos vivos */
+  --accent-hover: #efaf74;
+  --accent-press: #d98f4a;
+
+  --text-1: #ede9e3;          /* texto principal — blanco roto cálido */
+  --text-2: #8f8a84;          /* texto secundario / muted */
+  --dot-inactive: #5f5b56;    /* puntos y estados inactivos */
+
+  /* ámbar en alfa — anillos del orbe (opacidad creciente hacia el centro)
+     y tintes de ánimo en el calendario. Nunca usar blur/glow: usar estas capas. */
+  --accent-a06: rgba(233, 160, 92, 0.06);
+  --accent-a10: rgba(233, 160, 92, 0.10);
+  --accent-a16: rgba(233, 160, 92, 0.16);
+  --accent-a26: rgba(233, 160, 92, 0.26);
+  --accent-a40: rgba(233, 160, 92, 0.40);
+  --accent-a55: rgba(233, 160, 92, 0.55);
+
+  /* semánticos */
+  --text-body: var(--text-1);
+  --text-muted: var(--text-2);
+  --text-on-accent: var(--bg-0);   /* texto/iconos oscuros sobre ámbar */
+  --surface-card: var(--surface-1);
+  --border-subtle: var(--border-1);
+  --focus-ring: var(--accent-a55);
+  --mood-line: var(--accent);      /* la curva de ánimo siempre es ámbar */
+  --selection: var(--accent-a26);
+}

@@ -1,0 +1,24 @@
+/* Nadie — espacio, radios y layout. Escala de 4px. */
+
+:root {
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 20px;
+  --space-6: 24px;
+  --space-7: 32px;
+  --space-8: 40px;
+  --space-9: 56px;
+
+  /* radios — o suave o círculo; nunca esquinas redondeadas de un solo lado */
+  --radius-s: 10px;      /* chips, celdas de calendario */
+  --radius-m: 16px;      /* tarjetas */
+  --radius-full: 999px;  /* botones, orbe, puntos */
+
+  /* layout móvil */
+  --screen-w: 390px;
+  --screen-pad: 24px;    /* margen lateral estándar */
+  --hit-min: 44px;       /* objetivo táctil mínimo */
+  --nav-h: 64px;         /* navegación inferior */
+}

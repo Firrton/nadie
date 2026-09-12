@@ -1,0 +1,62 @@
+/* Nadie — movimiento. Todo respira lento; nada rebota, nada parpadea.
+   La animación central es la respiración del orbe (~3s).
+   prefers-reduced-motion apaga TODAS las clases anim-*. */
+
+:root {
+  --dur-1: 150ms;   /* @kind other */ /* hover, press */
+  --dur-2: 300ms;   /* @kind other */ /* transiciones de estado */
+  --dur-3: 600ms;   /* @kind other */ /* cambios de pantalla, fades */
+  --ease-out: cubic-bezier(0.22, 0.61, 0.36, 1);   /* @kind other */
+  --ease-inout: cubic-bezier(0.45, 0, 0.25, 1);    /* @kind other */
+  --breathe-dur: 3.2s;  /* @kind other */
+}
+
+/* respiración base — escala + opacidad, lenta */
+@keyframes nadie-breathe {
+  0%, 100% { transform: scale(1); opacity: 1; }
+  50%      { transform: scale(1.045); opacity: 0.9; }
+}
+/* respiración honda — estado escuchando */
+@keyframes nadie-breathe-deep {
+  0%, 100% { transform: scale(1); opacity: 1; }
+  50%      { transform: scale(1.07); opacity: 0.96; }
+}
+/* onda que se expande — escuchando */
+@keyframes nadie-ripple {
+  0%   { transform: scale(0.55); opacity: 0.5; }
+  100% { transform: scale(1.12); opacity: 0; }
+}
+/* puntos de procesando */
+@keyframes nadie-dot {
+  0%, 60%, 100% { opacity: 0.35; transform: translateY(0); }
+  30%           { opacity: 1; transform: translateY(-3px); }
+}
+/* barras de voz — hablando */
+@keyframes nadie-eq {
+  0%, 100% { transform: scaleY(0.35); }
+  50%      { transform: scaleY(1); }
+}
+/* pulso suave de opacidad */
+@keyframes nadie-pulse-soft {
+  0%, 100% { opacity: 1; }
+  50%      { opacity: 0.78; }
+}
+/* fade de entrada de pantallas y transcripción */
+@keyframes nadie-fade-up {
+  from { opacity: 0; transform: translateY(8px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+.anim-breathe      { animation: nadie-breathe var(--breathe-dur) var(--ease-inout) infinite; }
+.anim-breathe-deep { animation: nadie-breathe-deep 1.6s var(--ease-inout) infinite; }
+.anim-ripple       { animation: nadie-ripple 1.9s var(--ease-out) infinite; }
+.anim-dot          { animation: nadie-dot 1.1s var(--ease-inout) infinite; }
+.anim-eq           { animation: nadie-eq 0.9s var(--ease-inout) infinite; transform-origin: center; }
+.anim-pulse-soft   { animation: nadie-pulse-soft 1.4s var(--ease-inout) infinite; }
+.anim-fade-up      { animation: nadie-fade-up var(--dur-3) var(--ease-out) both; }
+
+@media (prefers-reduced-motion: reduce) {
+  [class^="anim-"], [class*=" anim-"] {
+    animation: none !important;
+  }
+}

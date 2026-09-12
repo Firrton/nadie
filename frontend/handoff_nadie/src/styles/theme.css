@@ -1,0 +1,33 @@
+/* Nadie — tema de la app.
+   Decisión de producto (sept 2026): la interfaz es blanco y negro.
+   El ÚNICO color de la app es el ánimo: azul cuando sube, rojo cuando baja.
+   El ámbar del design system queda como variante alternativa, desactivada.
+
+   Para volver al acento ámbar, borra este archivo: tokens/colors.css ya
+   trae el ámbar por defecto. */
+
+:root {
+  --accent: #ede9e3;
+  --accent-hover: #ffffff;
+  --accent-press: #d9d4cd;
+  --accent-a06: rgba(237, 233, 227, 0.06);
+  --accent-a10: rgba(237, 233, 227, 0.10);
+  --accent-a16: rgba(237, 233, 227, 0.16);
+  --accent-a26: rgba(237, 233, 227, 0.26);
+  --accent-a40: rgba(237, 233, 227, 0.40);
+  --accent-a55: rgba(237, 233, 227, 0.55);
+  --mood-line: #ede9e3;
+  --focus-ring: rgba(237, 233, 227, 0.55);
+  --selection: rgba(237, 233, 227, 0.26);
+
+  /* color del ánimo — lo único con color */
+  --mood-up: #7fa4d4;
+  --mood-down: #d26a56;
+
+  /* la sans del logotipo. Instrument Sans es la hermana de Instrument Serif */
+  --font-sans: 'Instrument Sans', system-ui, -apple-system, sans-serif;
+}
+
+body {
+  font-family: var(--font-sans);
+}

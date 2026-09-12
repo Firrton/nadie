@@ -1,0 +1,608 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <link rel="stylesheet" href="./ds/styles.css">
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Instrument+Sans:wght@400;500&amp;display=swap">
+</helmet>
+<div style="width:100%;height:100vh;margin:0 auto;max-width:390px;background:var(--bg-0);display:flex;flex-direction:column;overflow:hidden;position:relative;--accent:{{ thAccent }};--accent-hover:{{ thHover }};--accent-press:{{ thPress }};--accent-a06:{{ thA06 }};--accent-a10:{{ thA10 }};--accent-a16:{{ thA16 }};--accent-a26:{{ thA26 }};--accent-a40:{{ thA40 }};--accent-a55:{{ thA55 }};--mood-line:{{ thAccent }};--focus-ring:{{ thA55 }};--selection:{{ thA26 }};--font-sans:{{ thFont }};font-family:{{ thFont }}">
+
+  <sc-if value="{{ isHome }}" hint-placeholder-val="{{ true }}">
+    <div data-screen-label="Home" class="anim-fade-up" style="flex:1;display:flex;flex-direction:column;overflow-y:auto;padding:0 var(--screen-pad)">
+      <header style="display:flex;justify-content:space-between;align-items:center;padding-top:var(--space-5);min-height:var(--hit-min)">
+        <span class="t-logo">nadie</span>
+        <span style="display:flex;align-items:center;gap:6px">
+          <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="var(--text-2)" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect width="18" height="11" x="3" y="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>
+          <span class="t-micro">cifrado</span>
+        </span>
+      </header>
+      <div style="padding-top:var(--space-8)">
+        <h1 class="t-display">Aquí nadie te juzga.</h1>
+        <p class="t-small" style="margin-top:var(--space-3)">Lo que digas se queda aquí. Nadie más lo escucha.</p>
+      </div>
+      <div style="flex:1;display:flex;align-items:center;justify-content:center;padding:var(--space-6) 0;min-height:300px">
+        <x-import component="TalkButton" from="./nadie-ui.jsx" size="{{ orbHome }}" on-hold-start="{{ homeHoldStart }}" on-hold-end="{{ homeHoldEnd }}" hint-size="240px,290px"></x-import>
+      </div>
+      <div style="padding-bottom:var(--space-4)">
+        <x-import component="WeekStrip" from="./nadie-ui.jsx" values="{{ weekValues }}" up-color="{{ moodUp }}" down-color="{{ moodDown }}" today-index="{{ todayIdx }}" caption="{{ weekCaption }}" on-click="{{ goCamino }}" hint-size="100%,124px"></x-import>
+      </div>
+    </div>
+  </sc-if>
+
+  <sc-if value="{{ isOnboarding }}" hint-placeholder-val="{{ false }}">
+    <div data-screen-label="Onboarding" style="flex:1;display:flex;flex-direction:column;padding:0 var(--screen-pad);overflow-y:auto">
+      <div style="min-height:56px;display:flex;align-items:center;padding-top:var(--space-4)">
+        <sc-if value="{{ obShowBack }}" hint-placeholder-val="{{ false }}">
+          <button type="button" class="n-btn n-btn--ghost n-btn--md" onClick="{{ obBack }}" aria-label="Volver" style="padding:6px 10px;margin-left:-10px">
+            <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m15 18-6-6 6-6"></path></svg>
+          </button>
+        </sc-if>
+      </div>
+
+      <sc-if value="{{ ob0 }}" hint-placeholder-val="{{ false }}">
+        <div style="flex:1;display:flex;flex-direction:column;justify-content:center;padding-bottom:var(--space-8)">
+          <div class="anim-fade-up">
+            <x-import component="VoiceOrb" from="./nadie-ui.jsx" size="{{ orbWelcome }}" hint-size="72px,72px"></x-import>
+          </div>
+          <p class="t-title anim-fade-up" style="margin-top:var(--space-8);color:var(--text-2);animation-delay:0.4s">Hay cosas que no le cuentas a nadie.</p>
+          <h1 class="t-display anim-fade-up" style="margin-top:var(--space-4);font-size:40px;animation-delay:1.05s">Cuéntaselas a <i>nadie</i>.</h1>
+          <p class="t-small anim-fade-up" style="margin-top:var(--space-6);animation-delay:1.6s;text-wrap:pretty">Una voz que te escucha sin caras, sin cuentas y sin juicio. Y que no te olvida.</p>
+        </div>
+        <div style="padding-bottom:var(--space-4)">
+          <button type="button" class="n-btn n-btn--primary n-btn--lg n-btn--full" onClick="{{ obNext }}">Pasa</button>
+        </div>
+      </sc-if>
+
+      <sc-if value="{{ ob1 }}" hint-placeholder-val="{{ false }}">
+        <div class="anim-fade-up" style="flex:1;display:flex;flex-direction:column;justify-content:center;padding-bottom:var(--space-8)">
+          <h1 class="t-title">Antes de pasar —</h1>
+          <sc-if value="{{ notUnder18 }}" hint-placeholder-val="{{ true }}">
+            <p class="t-body t-muted" style="margin-top:var(--space-3)">esto es un espacio para adultos. ¿Tienes 18 o más?</p>
+          </sc-if>
+          <sc-if value="{{ under18 }}" hint-placeholder-val="{{ false }}">
+            <p class="t-body" style="margin-top:var(--space-3)">Este espacio es para mayores de 18. Cuídate — y vuelve cuando los cumplas.</p>
+          </sc-if>
+        </div>
+        <sc-if value="{{ notUnder18 }}" hint-placeholder-val="{{ true }}">
+          <div style="padding-bottom:var(--space-4);display:flex;flex-direction:column;gap:var(--space-2)">
+            <button type="button" class="n-btn n-btn--primary n-btn--lg n-btn--full" onClick="{{ obConfirmAge }}">Sí, tengo 18 o más</button>
+            <button type="button" class="n-btn n-btn--ghost n-btn--md n-btn--full" onClick="{{ obUnder }}">Todavía no</button>
+          </div>
+        </sc-if>
+      </sc-if>
+
+      <sc-if value="{{ ob2 }}" hint-placeholder-val="{{ false }}">
+        <div class="anim-fade-up" style="flex:1;display:flex;flex-direction:column;padding-bottom:var(--space-4)">
+          <h1 class="t-title" style="margin-top:var(--space-2)">La voz que te escucha</h1>
+          <p class="t-small" style="margin-top:var(--space-2)">Este es tu espacio. Empieza cuando quieras.</p>
+          <div style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:var(--space-5);padding:var(--space-5) 0">
+            <div style="--breathe-dur:{{ obVoiceDur }}">
+              <button type="button" class="n-orbbtn" onClick="{{ obPlay }}" aria-label="{{ obPlayLabel }}">
+                <x-import component="VoiceOrb" from="./nadie-ui.jsx" state="{{ obOrbState }}" size="{{ orbPick }}" hint-size="170px,170px"></x-import>
+              </button>
+            </div>
+            <div style="display:flex;flex-direction:column;align-items:center;gap:var(--space-1)">
+              <span style="font-family:var(--font-serif);font-size:24px;line-height:1.2;color:var(--text-1)">{{ obVoiceName }}</span>
+              <span class="t-small">{{ obVoiceDesc }}</span>
+            </div>
+            <div style="min-height:30px;display:flex;align-items:center;justify-content:center">
+              <sc-if value="{{ obQuoteShow }}" hint-placeholder-val="{{ false }}">
+                <p class="t-serif-quote anim-fade-up" style="margin:0;font-size:18px;text-align:center">«{{ obQuote }}»</p>
+              </sc-if>
+              <sc-if value="{{ obQuoteHint }}" hint-placeholder-val="{{ true }}">
+                <span class="t-micro">Tócala para escucharla</span>
+              </sc-if>
+            </div>
+            <div style="display:flex;gap:var(--space-2)">
+              <sc-for list="{{ voiceTabs }}" as="t" hint-placeholder-count="3">
+                <button type="button" class="n-btn n-btn--md" onClick="{{ t.pick }}" style="background:{{ t.bg }};color:{{ t.color }};border-color:{{ t.border }}">{{ t.name }}</button>
+              </sc-for>
+            </div>
+          </div>
+        </div>
+        <div style="padding-bottom:var(--space-4)">
+          <p class="t-small" style="display:flex;align-items:center;justify-content:center;gap:6px;margin-bottom:var(--space-3)">
+            <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="var(--text-2)" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect width="18" height="11" x="3" y="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>
+            Lo que digas se queda aquí. Nadie más lo escucha.
+          </p>
+          <button type="button" class="n-btn n-btn--primary n-btn--lg n-btn--full" onClick="{{ obEnter }}">Entrar</button>
+        </div>
+      </sc-if>
+
+      <div style="display:flex;justify-content:center;gap:8px;padding-bottom:var(--space-6)" aria-hidden="true">
+        <sc-for list="{{ obDots }}" as="d" hint-placeholder-count="3">
+          <span style="width:6px;height:6px;border-radius:var(--radius-full);background:{{ d.bg }};transition:background-color var(--dur-2) var(--ease-out)"></span>
+        </sc-for>
+      </div>
+    </div>
+  </sc-if>
+  <sc-if value="{{ isConvo }}" hint-placeholder-val="{{ false }}">
+    <div data-screen-label="Conversación" style="flex:1;display:flex;flex-direction:column;overflow:hidden">
+      <div style="display:flex;justify-content:center;padding:var(--space-5) var(--screen-pad) var(--space-2)">
+        <span class="t-micro" style="display:flex;align-items:center;gap:6px">
+          <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="var(--text-2)" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect width="18" height="11" x="3" y="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>
+          Esta conversación se queda aquí
+        </span>
+      </div>
+      <div ref="{{ transcriptRef }}" aria-live="polite" style="flex:1;min-height:0;overflow-y:auto;padding:var(--space-4) var(--screen-pad);display:flex;flex-direction:column;gap:var(--space-5)">
+        <sc-if value="{{ convoEmpty }}" hint-placeholder-val="{{ false }}">
+          <p class="t-small" style="text-align:center;margin-top:var(--space-7)">Cuando quieras. Sin prisa.</p>
+        </sc-if>
+        <sc-for list="{{ turns }}" as="t" hint-placeholder-count="0">
+          <div style="display:flex;flex-direction:column;gap:4px">
+            <span class="t-micro" style="color:{{ t.labelColor }}">{{ t.who }}</span>
+            <p style="margin:0;font-family:{{ t.font }};font-size:{{ t.size }};line-height:1.5;color:{{ t.color }};text-wrap:pretty">{{ t.text }}</p>
+          </div>
+        </sc-for>
+        <sc-if value="{{ showLive }}" hint-placeholder-val="{{ false }}">
+          <div style="display:flex;flex-direction:column;gap:4px">
+            <span class="t-micro" style="color:{{ liveLabelColor }}">{{ liveWho }}</span>
+            <p style="margin:0;font-family:{{ liveFont }};font-size:{{ liveSize }};line-height:1.5;color:var(--text-1);text-wrap:pretty">{{ liveText }}</p>
+          </div>
+        </sc-if>
+      </div>
+      <div style="flex:none;display:flex;flex-direction:column;align-items:center;gap:var(--space-4);padding:var(--space-3) var(--screen-pad) var(--space-6)">
+        <x-import component="TalkButton" from="./nadie-ui.jsx" size="{{ orbConvo }}" state="{{ orbState }}" hint="{{ convoHint }}" hint-active="Te escucho." on-hold-start="{{ convoHoldStart }}" on-hold-end="{{ convoHoldEnd }}" hint-size="170px,205px"></x-import>
+        <div style="display:flex;align-items:center;gap:var(--space-3)">
+          <button type="button" class="n-btn n-btn--secondary" onClick="{{ togglePause }}" aria-label="{{ pauseLabel }}" style="width:52px;height:52px;padding:0;border-radius:var(--radius-full)">
+            <sc-if value="{{ notPaused }}" hint-placeholder-val="{{ true }}">
+              <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="14" y="4" width="4" height="16" rx="1"></rect><rect x="6" y="4" width="4" height="16" rx="1"></rect></svg>
+            </sc-if>
+            <sc-if value="{{ paused }}" hint-placeholder-val="{{ false }}">
+              <svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor" stroke="none" aria-hidden="true"><polygon points="7 4 19 12 7 20 7 4"></polygon></svg>
+            </sc-if>
+          </button>
+          <button type="button" class="n-btn n-btn--secondary n-btn--md" onClick="{{ finish }}">
+            <svg viewBox="0 0 24 24" width="14" height="14" fill="currentColor" stroke="none" aria-hidden="true"><rect width="14" height="14" x="5" y="5" rx="2"></rect></svg>
+            <span>Terminar</span>
+          </button>
+        </div>
+      </div>
+    </div>
+  </sc-if>
+  <sc-if value="{{ isCierre }}" hint-placeholder-val="{{ false }}">
+    <div data-screen-label="Cierre" class="anim-fade-up" style="flex:1;display:flex;flex-direction:column;overflow-y:auto;padding:0 var(--screen-pad)">
+      <div style="display:flex;flex-direction:column;align-items:center;text-align:center;padding:var(--space-9) 0 var(--space-7)">
+        <x-import component="VoiceOrb" from="./nadie-ui.jsx" size="{{ orbCierre }}" hint-size="88px,88px"></x-import>
+        <h1 class="t-title" style="margin-top:var(--space-6)">Quedó dicho.</h1>
+        <p class="t-body t-muted" style="margin-top:var(--space-3);max-width:300px;text-wrap:pretty">{{ cierreResumen }}</p>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:var(--space-3)">
+        <sc-if value="{{ notRated }}" hint-placeholder-val="{{ true }}">
+          <div class="n-card" style="padding:var(--space-4) var(--space-5);display:flex;flex-direction:column;gap:var(--space-3)">
+            <span class="t-small" style="color:var(--text-1)">Antes de irte: ¿cómo te sientes ahora?</span>
+            <div style="display:flex;justify-content:space-between;gap:var(--space-2)">
+              <sc-for list="{{ ratingOpts }}" as="r" hint-placeholder-count="5">
+                <button type="button" onClick="{{ r.pick }}" aria-label="{{ r.label }}" style="width:48px;height:48px;border-radius:var(--radius-full);background:{{ r.bg }};border:1px solid var(--border-1);cursor:pointer;padding:0;transition:border-color var(--dur-1) var(--ease-out),transform var(--dur-1) var(--ease-out)" style-hover="border-color:var(--text-2)" style-active="transform:scale(0.94)"></button>
+              </sc-for>
+            </div>
+            <div style="display:flex;justify-content:space-between">
+              <span class="t-micro">abajo</span>
+              <span class="t-micro">arriba</span>
+            </div>
+          </div>
+        </sc-if>
+        <sc-if value="{{ isRated }}" hint-placeholder-val="{{ false }}">
+          <x-import component="WeekStrip" from="./nadie-ui.jsx" values="{{ weekValues }}" up-color="{{ moodUp }}" down-color="{{ moodDown }}" today-index="{{ todayIdx }}" caption="hoy ya quedó registrado" on-click="{{ goCamino }}" hint-size="100%,124px"></x-import>
+          <p class="t-micro" style="margin:0;text-align:center">Registrado. Solo tú lo ves.</p>
+        </sc-if>
+        <sc-if value="{{ showNota }}" hint-placeholder-val="{{ false }}">
+          <div class="n-card" style="padding:var(--space-4) var(--space-5);display:flex;flex-direction:column;gap:var(--space-2)">
+            <span class="t-small">Si vas con un terapeuta, llévale esto</span>
+            <p class="t-serif-quote" style="margin:0;font-size:18px;line-height:1.45">«No es una sola cosa grande: son mil chicas. Decirlo en voz alta ayudó.»</p>
+            <span class="t-micro">Nadie acompaña tu desahogo. No sustituye la ayuda profesional.</span>
+          </div>
+        </sc-if>
+      </div>
+      <div style="padding:var(--space-5) 0 var(--space-6);display:flex;flex-direction:column;gap:var(--space-2)">
+        <button type="button" class="n-btn n-btn--primary n-btn--lg n-btn--full" onClick="{{ goHome }}">Volver al inicio</button>
+        <button type="button" class="n-btn n-btn--ghost n-btn--md n-btn--full" onClick="{{ goCamino }}">Ver tu camino</button>
+      </div>
+    </div>
+  </sc-if>
+  <sc-if value="{{ isCamino }}" hint-placeholder-val="{{ false }}">
+    <div data-screen-label="Tu camino" class="anim-fade-up" style="flex:1;overflow-y:auto;padding:0 var(--screen-pad)">
+      <header style="padding-top:var(--space-6)">
+        <h1 class="t-title">Tu camino</h1>
+        <p class="t-small" style="margin-top:var(--space-1)">Solo tuyo. Nadie más lo ve.</p>
+      </header>
+      <div class="n-card" style="margin-top:var(--space-5);padding:var(--space-4) var(--space-5)">
+        <div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:var(--space-2)">
+          <span class="t-small">Últimas 4 semanas</span>
+          <span class="t-micro">{{ caminoRango }}</span>
+        </div>
+        <x-import component="MoodCurve" from="./nadie-ui.jsx" values="{{ monthVals }}" up-color="{{ moodUp }}" down-color="{{ moodDown }}" width="{{ curveW }}" height="{{ curveH }}" hint-size="100%,104px"></x-import>
+      </div>
+      <div style="margin-top:var(--space-6)">
+        <div style="display:grid;grid-template-columns:repeat(7,1fr);gap:6px">
+          <span class="t-micro" style="text-align:center" aria-hidden="true">l</span>
+          <span class="t-micro" style="text-align:center" aria-hidden="true">m</span>
+          <span class="t-micro" style="text-align:center" aria-hidden="true">x</span>
+          <span class="t-micro" style="text-align:center" aria-hidden="true">j</span>
+          <span class="t-micro" style="text-align:center" aria-hidden="true">v</span>
+          <span class="t-micro" style="text-align:center" aria-hidden="true">s</span>
+          <span class="t-micro" style="text-align:center" aria-hidden="true">d</span>
+          <sc-for list="{{ calCells }}" as="c" hint-placeholder-count="28">
+            <div style="aspect-ratio:1;border-radius:var(--radius-s);background:{{ c.bg }};border:1px solid {{ c.border }};display:flex;align-items:center;justify-content:center">
+              <span style="font-size:10.5px;letter-spacing:var(--tracking-micro);color:{{ c.color }}">{{ c.n }}</span>
+            </div>
+          </sc-for>
+        </div>
+        <p class="t-micro" style="margin-top:var(--space-3)">El color de cada día sigue tu ánimo — arriba o abajo. Sin etiquetas, solo el registro.</p>
+      </div>
+      <sc-if value="{{ showPatterns }}" hint-placeholder-val="{{ false }}">
+        <div class="n-card" style="margin-top:var(--space-6);padding:var(--space-4) var(--space-5);display:flex;flex-direction:column;gap:var(--space-2)">
+          <span class="t-small" style="color:var(--text-1);font-weight:var(--weight-medium)">Lo que nadie va notando</span>
+          <sc-for list="{{ patterns }}" as="p" hint-placeholder-count="2">
+            <p class="t-small" style="margin:0;text-wrap:pretty">{{ p.text }}</p>
+          </sc-for>
+          <span class="t-micro" style="margin-top:var(--space-1)">Patrones que ve solo este teléfono. Nadie más.</span>
+        </div>
+      </sc-if>
+      <p class="t-small" style="margin:var(--space-6) 0;text-wrap:pretty">{{ caminoNota }}</p>
+    </div>
+  </sc-if>
+  <sc-if value="{{ isAjustes }}" hint-placeholder-val="{{ false }}">
+    <div data-screen-label="Ajustes" class="anim-fade-up" style="flex:1;overflow-y:auto;padding:0 var(--screen-pad)">
+      <header style="padding-top:var(--space-6)">
+        <h1 class="t-title">Ajustes</h1>
+      </header>
+      <section style="margin-top:var(--space-6)">
+        <h2 class="t-heading" style="font-size:16px">La voz que te acompaña</h2>
+        <div style="display:flex;flex-direction:column;gap:var(--space-2);margin-top:var(--space-3)">
+          <sc-for list="{{ voices }}" as="v" hint-placeholder-count="3">
+            <div style="display:flex;align-items:center;gap:var(--space-3);padding:var(--space-2) var(--space-4);border-radius:var(--radius-m);background:{{ v.bg }};border:1px solid {{ v.border }};transition:background-color var(--dur-2) var(--ease-out),border-color var(--dur-2) var(--ease-out)">
+              <button type="button" class="n-orbbtn" onClick="{{ v.play }}" aria-label="{{ v.playLabel }}" style="width:40px;height:40px;flex:none;align-items:center;justify-content:center;gap:3px;background:var(--accent-a10)">
+                <sc-if value="{{ v.playing }}" hint-placeholder-val="{{ false }}">
+                  <span class="anim-eq" style="width:3px;height:12px;border-radius:var(--radius-full);background:var(--accent)"></span>
+                  <span class="anim-eq" style="width:3px;height:17px;border-radius:var(--radius-full);background:var(--accent);animation-delay:0.13s"></span>
+                  <span class="anim-eq" style="width:3px;height:10px;border-radius:var(--radius-full);background:var(--accent);animation-delay:0.26s"></span>
+                </sc-if>
+                <sc-if value="{{ v.still }}" hint-placeholder-val="{{ true }}">
+                  <svg viewBox="0 0 24 24" width="14" height="14" fill="var(--accent)" stroke="none" aria-hidden="true"><polygon points="7 4 19 12 7 20 7 4"></polygon></svg>
+                </sc-if>
+              </button>
+              <button type="button" onClick="{{ v.pick }}" style="flex:1;display:flex;align-items:center;justify-content:space-between;gap:var(--space-2);text-align:left;background:none;border:0;padding:0;cursor:pointer;font:inherit;color:inherit;min-height:var(--hit-min)">
+                <span style="display:flex;flex-direction:column;gap:1px">
+                  <span style="font-weight:var(--weight-medium);font-size:15px;color:var(--text-1)">{{ v.name }}</span>
+                  <span class="t-micro">{{ v.desc }}</span>
+                </span>
+                <sc-if value="{{ v.selected }}" hint-placeholder-val="{{ false }}">
+                  <svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="var(--accent)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5"></path></svg>
+                </sc-if>
+              </button>
+            </div>
+          </sc-for>
+        </div>
+      </section>
+      <section style="margin-top:var(--space-7)">
+        <h2 class="t-heading" style="font-size:16px">Privacidad</h2>
+        <div class="n-card" style="margin-top:var(--space-3);padding:var(--space-4) var(--space-5);display:flex;flex-direction:column;gap:var(--space-3)">
+          <div style="display:flex;gap:var(--space-2);align-items:flex-start">
+            <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="var(--accent)" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="margin-top:2px;flex:none"><rect width="18" height="11" x="3" y="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>
+            <p class="t-small" style="color:var(--text-1)">Lo que dices se queda en este teléfono. Sin cuentas ni nube. No entrena ninguna IA y no se comparte con ninguna empresa — solo tú puedes verlo.</p>
+          </div>
+          <sc-if value="{{ clearIdle }}" hint-placeholder-val="{{ true }}">
+            <button type="button" class="n-btn n-btn--ghost n-btn--md" onClick="{{ clearAsk }}" style="justify-content:flex-start;padding-left:0">Borrar todo mi historial</button>
+          </sc-if>
+          <sc-if value="{{ clearConfirm }}" hint-placeholder-val="{{ false }}">
+            <p class="t-small" style="margin:0">¿Seguro? No hay forma de recuperarlo.</p>
+            <div style="display:flex;gap:var(--space-2)">
+              <button type="button" class="n-btn n-btn--secondary n-btn--md" onClick="{{ clearYes }}">Sí, borrar</button>
+              <button type="button" class="n-btn n-btn--ghost n-btn--md" onClick="{{ clearNo }}">Cancelar</button>
+            </div>
+          </sc-if>
+          <sc-if value="{{ clearDone }}" hint-placeholder-val="{{ false }}">
+            <p class="t-small" style="margin:0;color:var(--text-1)">Listo. Empiezas de cero.</p>
+          </sc-if>
+        </div>
+      </section>
+      <section style="margin:var(--space-7) 0 var(--space-6)">
+        <h2 class="t-heading" style="font-size:16px">Si estás pasando por algo fuerte</h2>
+        <p class="t-small" style="margin-top:var(--space-3);text-wrap:pretty">Nadie es un desahogo — no sustituye la ayuda profesional. Si lo que sientes te rebasa, hablar con alguien capacitado ayuda.</p>
+        <p class="t-micro" style="margin-top:var(--space-2)">México: Línea de la Vida, 800 911 2000 · España: línea 024</p>
+      </section>
+    </div>
+  </sc-if>
+
+  <sc-if value="{{ showNav }}" hint-placeholder-val="{{ true }}">
+    <x-import component="BottomNav" from="./nadie-ui.jsx" active="{{ navActive }}" on-change="{{ navChange }}" hint-size="100%,64px"></x-import>
+  </sc-if>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;$preview&quot;: {&quot;width&quot;: 390, &quot;height&quot;: 844}, &quot;letraUI&quot;: {&quot;editor&quot;: &quot;enum&quot;, &quot;options&quot;: [&quot;Instrument Sans&quot;, &quot;Hanken Grotesk&quot;], &quot;default&quot;: &quot;Instrument Sans&quot;, &quot;tsType&quot;: &quot;'Instrument Sans'|'Hanken Grotesk'&quot;, &quot;section&quot;: &quot;Tema&quot;}, &quot;colorSube&quot;: {&quot;editor&quot;: &quot;color&quot;, &quot;options&quot;: [&quot;#7FA4D4&quot;, &quot;#8FB3A6&quot;, &quot;#9BAFE3&quot;], &quot;default&quot;: &quot;#7FA4D4&quot;, &quot;tsType&quot;: &quot;string&quot;, &quot;section&quot;: &quot;Ánimo&quot;}, &quot;colorBaja&quot;: {&quot;editor&quot;: &quot;color&quot;, &quot;options&quot;: [&quot;#D26A56&quot;, &quot;#C97B7B&quot;, &quot;#B96A87&quot;], &quot;default&quot;: &quot;#D26A56&quot;, &quot;tsType&quot;: &quot;string&quot;, &quot;section&quot;: &quot;Ánimo&quot;}, &quot;acento&quot;: {&quot;editor&quot;: &quot;enum&quot;, &quot;options&quot;: [&quot;blanco y negro&quot;, &quot;ámbar&quot;], &quot;default&quot;: &quot;blanco y negro&quot;, &quot;tsType&quot;: &quot;'blanco y negro'|'ámbar'&quot;, &quot;section&quot;: &quot;Tema&quot;}, &quot;pantallaInicial&quot;: {&quot;editor&quot;: &quot;enum&quot;, &quot;options&quot;: [&quot;onboarding&quot;, &quot;home&quot;], &quot;default&quot;: &quot;onboarding&quot;, &quot;tsType&quot;: &quot;'onboarding'|'home'&quot;, &quot;section&quot;: &quot;Demo&quot;}, &quot;notaTerapeuta&quot;: {&quot;editor&quot;: &quot;boolean&quot;, &quot;default&quot;: true, &quot;tsType&quot;: &quot;boolean&quot;, &quot;section&quot;: &quot;Cierre&quot;}}">
+class Component extends DCLogic {
+  state = {
+    screen: null,          // null => usa props.pantallaInicial
+    obStep: 0, under18: false,
+    voice: 'brasa', voicePlay: null, quoteFor: null,
+    convo: 'idle', paused: false, turns: [], live: '', exch: 0, sessionSaved: false, rated: false,
+    week: [0.38, 0.52, null, 0.46, 0.58, null, null],
+    todayIdx: 5,
+    confirmClear: false, cleared: false,
+  };
+
+  USER_LINES = [
+    'Hoy fue uno de esos días en los que todo pesa. El trabajo, la casa, todo. Y no se lo puedo decir a nadie sin sentir que molesto.',
+    'Es que no es algo grande, son mil cosas chicas. Y cuando lo cuento en voz alta suena menos grave de lo que se siente.',
+    'Sí. Creo que solo necesitaba soltarlo.',
+  ];
+  VOICES = [
+    { id: 'brasa', name: 'Brasa', desc: 'Cálida y grave, sin prisa', dur: '3.6s', quote: 'Aquí estoy. Sin prisa.' },
+    { id: 'niebla', name: 'Niebla', desc: 'Suave, casi un susurro', dur: '4.4s', quote: 'Cuando quieras. Te escucho.' },
+    { id: 'cauce', name: 'Cauce', desc: 'Clara y cercana', dur: '2.9s', quote: 'Cuéntame. Se queda entre nosotros.' },
+  ];
+  REPLIES = [
+    'Te escucho. Un día que pesa no necesita justificación. Cuéntame qué fue lo que más te cargó hoy.',
+    'Que suene menos grave no lo hace menos real. Mil cosas chicas también cansan. Aquí puedes decirlas todas, en el orden que salgan.',
+    'Para eso está este espacio. Lo dijiste, y ya no está solo en tu cabeza. Cuando quieras cerrar, aquí sigo.',
+  ];
+
+  timers = [];
+  scrollRef = React.createRef();
+  componentDidUpdate() {
+    const el = this.scrollRef.current;
+    if (el && this.getScreen() === 'convo') el.scrollTop = el.scrollHeight;
+  }
+  after(ms, fn) { this.timers.push(setTimeout(fn, ms)); }
+  every(ms, fn) { const id = setInterval(fn, ms); this.timers.push(id); return id; }
+  clearTimers() { this.timers.forEach((t) => { clearTimeout(t); clearInterval(t); }); this.timers = []; }
+  componentWillUnmount() { this.clearTimers(); }
+
+  getScreen() { return this.state.screen ?? (this.props.pantallaInicial ?? 'onboarding'); }
+  go(screen) { this.clearTimers(); this.setState({ screen, voicePlay: null }); }
+
+  // ---- conversación ----
+  streamWords(text, ms, onTick, onDone) {
+    const words = text.split(' ');
+    let i = 0;
+    const id = this.every(ms, () => {
+      if (this.state.paused) return;
+      i += 1;
+      onTick(words.slice(0, i).join(' '));
+      if (i >= words.length) { clearInterval(id); if (onDone) this.after(360, onDone); }
+    });
+  }
+  beginListening(auto) {
+    const line = this.USER_LINES[Math.min(this.state.exch, this.USER_LINES.length - 1)];
+    this.setState({ convo: 'listening', live: '' });
+    this.streamWords(line, 150, (t) => this.setState({ live: t }), auto ? () => this.finishListening() : null);
+  }
+  finishListening() {
+    if (this.state.convo !== 'listening') return;
+    this.clearTimers();
+    const said = this.state.live;
+    if (!said) { this.setState({ convo: 'idle', live: '' }); return; }
+    this.setState((s) => ({ turns: [...s.turns, { who: 'tú', text: said }], live: '', convo: 'processing' }));
+    this.after(1000, () => this.speakReply());
+  }
+  speakReply() {
+    const reply = this.REPLIES[Math.min(this.state.exch, this.REPLIES.length - 1)];
+    this.setState({ convo: 'speaking', live: '' });
+    this.streamWords(reply, 120, (t) => this.setState({ live: t }), () => {
+      this.setState((s) => ({ turns: [...s.turns, { who: 'nadie', text: reply }], live: '', convo: 'idle', exch: s.exch + 1 }));
+    });
+  }
+  startSessionFromHome(ms) {
+    if (ms != null && ms < 250) return;
+    this.clearTimers();
+    this.setState({ screen: 'convo', convo: 'idle', turns: [], live: '', exch: 0, paused: false, sessionSaved: false, rated: false });
+    this.after(420, () => this.beginListening(true));
+  }
+  endSession() {
+    this.clearTimers();
+    this.setState({ convo: 'idle', paused: false, screen: 'cierre' });
+  }
+  rateDay(v) {
+    this.setState((s) => {
+      const week = s.week.slice();
+      week[s.todayIdx] = v;
+      return { week, rated: true };
+    });
+  }
+
+  hexRgb(hex) { return parseInt(hex.slice(1, 3), 16) + ', ' + parseInt(hex.slice(3, 5), 16) + ', ' + parseInt(hex.slice(5, 7), 16); }
+  moodUpColor() { return this.props.colorSube ?? '#7FA4D4'; }
+  moodDownColor() { return this.props.colorBaja ?? '#D26A56'; }
+  moodTint(v) {
+    if (v == null) return 'transparent';
+    if (Math.abs(v - 0.5) < 0.03) return 'var(--surface-2)';
+    const rgb = this.hexRgb(v >= 0.5 ? this.moodUpColor() : this.moodDownColor());
+    const t = Math.abs(v - 0.5) * 2;
+    const a = t < 0.2 ? 0.1 : t < 0.45 ? 0.16 : t < 0.7 ? 0.28 : 0.42;
+    return 'rgba(' + rgb + ', ' + a + ')';
+  }
+
+  MONTH = [0.34, 0.4, null, 0.3, 0.42, 0.38, null, 0.45, 0.5, 0.4, null, 0.36, 0.52, 0.47, null, 0.55, 0.48, null, 0.6, 0.52, 0.58, 0.5, null, 0.62, 0.55, 0.66, 0.6];
+
+  buildCamino() {
+    const today = new Date();
+    const vals = this.state.cleared ? new Array(27).fill(null) : this.MONTH.slice();
+    vals.push(this.state.week[this.state.todayIdx]);
+    const start = new Date(today);
+    start.setDate(today.getDate() - 27);
+    const cells = [];
+    const pad = (start.getDay() + 6) % 7;
+    for (let i = 0; i < pad; i++) cells.push({ n: '', bg: 'transparent', border: 'transparent', color: 'transparent' });
+    for (let i = 0; i < 28; i++) {
+      const d = new Date(start);
+      d.setDate(start.getDate() + i);
+      const v = vals[i];
+      cells.push({
+        n: String(d.getDate()),
+        bg: this.moodTint(v),
+        border: i === 27 ? 'var(--accent-a55)' : v == null ? 'var(--surface-1)' : 'transparent',
+        color: v == null ? 'var(--dot-inactive)' : 'var(--text-2)',
+      });
+    }
+    const M = ['ene', 'feb', 'mar', 'abr', 'may', 'jun', 'jul', 'ago', 'sep', 'oct', 'nov', 'dic'];
+    const fmt = (d) => d.getDate() + ' ' + M[d.getMonth()];
+    const n = vals.filter((v) => v != null).length;
+    const avg = (arr) => { const a = arr.filter((x) => x != null); return a.length ? a.reduce((x, y) => x + y, 0) / a.length : null; };
+    const a1 = avg(vals.slice(0, 14));
+    const a2 = avg(vals.slice(14));
+    const trendTxt = a1 == null || a2 == null
+      ? 'Todavía es pronto para ver patrones. Sigue hablando.'
+      : a2 > a1 + 0.02
+        ? 'Las últimas dos semanas van más arriba que las dos anteriores.'
+        : a2 < a1 - 0.02
+          ? 'Las últimas dos semanas vienen más abajo que las anteriores. Ahí está, sin drama.'
+          : 'Tu ánimo se ha mantenido estable estas cuatro semanas.';
+    return {
+      showPatterns: n > 0,
+      patterns: [
+        { text: trendTxt },
+        { text: 'Los días que hablas suelen quedar registrados más arriba que los que no.' },
+      ],
+      monthVals: vals,
+      calCells: cells,
+      caminoRango: fmt(start) + ' — ' + fmt(today),
+      caminoNota: n === 0
+        ? 'Nada por aquí todavía. Cuando hables, esto se llena solo.'
+        : n + ' momentos en 28 días. Nadie los recuerda para que tú no tengas que cargarlos solo.',
+    };
+  }
+
+  renderVals() {
+    const s = this.state;
+    const screen = this.getScreen();
+    const selVoice = this.VOICES.find((v) => v.id === s.voice) || this.VOICES[0];
+    const mono = (this.props.acento ?? 'blanco y negro') !== 'ámbar';
+    const rgb = mono ? '237, 233, 227' : '233, 160, 92';
+    const th = {
+      thAccent: mono ? '#ede9e3' : '#e9a05c',
+      thHover: mono ? '#ffffff' : '#efaf74',
+      thPress: mono ? '#d9d4cd' : '#d98f4a',
+      thA06: 'rgba(' + rgb + ', 0.06)', thA10: 'rgba(' + rgb + ', 0.10)', thA16: 'rgba(' + rgb + ', 0.16)',
+      thA26: 'rgba(' + rgb + ', 0.26)', thA40: 'rgba(' + rgb + ', 0.40)', thA55: 'rgba(' + rgb + ', 0.55)',
+      thFont: (this.props.letraUI ?? 'Instrument Sans') === 'Hanken Grotesk'
+        ? "'Hanken Grotesk', system-ui, sans-serif"
+        : "'Instrument Sans', system-ui, sans-serif",
+    };
+    return {
+      ...th,
+      moodUp: this.moodUpColor(),
+      moodDown: this.moodDownColor(),
+      // pantallas
+      isHome: screen === 'home', isOnboarding: screen === 'onboarding', isConvo: screen === 'convo',
+      isCierre: screen === 'cierre', isCamino: screen === 'camino', isAjustes: screen === 'ajustes',
+      showNav: screen === 'home' || screen === 'camino' || screen === 'ajustes',
+      navActive: screen === 'camino' ? 'camino' : screen === 'ajustes' ? 'ajustes' : 'home',
+      navChange: (id) => this.go(id === 'camino' ? 'camino' : id === 'ajustes' ? 'ajustes' : 'home'),
+      goCamino: () => this.go('camino'),
+      goHome: () => this.go('home'),
+      // home
+      orbHome: 218,
+      weekValues: s.week,
+      todayIdx: s.todayIdx,
+      weekCaption: s.week[s.todayIdx] == null ? 'hoy aún sin registro' : 'hoy ya quedó registrado',
+      homeHoldStart: () => {},
+      homeHoldEnd: (ms) => this.startSessionFromHome(ms),
+      // onboarding
+      ob0: s.obStep === 0, ob1: s.obStep === 1, ob2: s.obStep === 2,
+      obShowBack: s.obStep > 0,
+      under18: s.under18, notUnder18: !s.under18,
+      obNext: () => this.setState({ obStep: 1 }),
+      obBack: () => this.setState((p) => ({ obStep: Math.max(0, p.obStep - 1), under18: false })),
+      obConfirmAge: () => this.setState({ obStep: 2 }),
+      obUnder: () => this.setState({ under18: true }),
+      obEnter: () => this.go('home'),
+      // conversación
+      transcriptRef: this.scrollRef,
+      orbConvo: 148,
+      orbState: s.paused ? 'idle' : s.convo,
+      convoEmpty: s.turns.length === 0 && !s.live,
+      turns: s.turns.map((t) => ({
+        who: t.who,
+        text: t.text,
+        labelColor: t.who === 'nadie' ? 'var(--accent)' : 'var(--dot-inactive)',
+        font: t.who === 'nadie' ? 'var(--font-serif)' : 'var(--font-sans)',
+        size: t.who === 'nadie' ? '19px' : '16px',
+        color: t.who === 'nadie' ? 'var(--text-1)' : 'var(--text-2)',
+      })),
+      showLive: !!s.live,
+      liveText: s.live,
+      liveWho: s.convo === 'speaking' ? 'nadie' : 'tú',
+      liveLabelColor: s.convo === 'speaking' ? 'var(--accent)' : 'var(--dot-inactive)',
+      liveFont: s.convo === 'speaking' ? 'var(--font-serif)' : 'var(--font-sans)',
+      liveSize: s.convo === 'speaking' ? '19px' : '16px',
+      convoHint: s.paused ? 'En pausa' : s.convo === 'processing' ? 'Un momento…' : s.convo === 'speaking' ? '' : 'Mantén presionado para hablar',
+      convoHoldStart: () => { if (this.state.convo === 'idle' && !this.state.paused) this.beginListening(); },
+      convoHoldEnd: () => this.finishListening(),
+      paused: s.paused,
+      notPaused: !s.paused,
+      pauseLabel: s.paused ? 'Reanudar' : 'Pausar',
+      togglePause: () => this.setState((p) => ({ paused: !p.paused })),
+      finish: () => this.endSession(),
+      // cierre
+      orbCierre: 84,
+      cierreResumen: s.exch <= 1
+        ? 'Hablaste poco, pero lo dijiste en voz alta. Con eso alcanza por hoy.'
+        : 'Soltaste el peso del día — el trabajo, la casa, lo acumulado. Lo nombraste sin rodeos.',
+      showNota: this.props.notaTerapeuta ?? true,
+      notRated: !s.rated,
+      isRated: s.rated,
+      ratingOpts: [0.15, 0.35, 0.5, 0.65, 0.85].map((v, i) => ({
+        bg: this.moodTint(v),
+        label: ['Muy abajo', 'Abajo', 'A medias', 'Arriba', 'Muy arriba'][i],
+        pick: () => this.rateDay(v),
+      })),
+      // tu camino
+      ...this.buildCamino(),
+      curveW: 318, curveH: 104,
+      // ajustes
+      clearIdle: !s.confirmClear && !s.cleared,
+      clearConfirm: s.confirmClear,
+      clearDone: s.cleared,
+      clearAsk: () => this.setState({ confirmClear: true }),
+      clearNo: () => this.setState({ confirmClear: false }),
+      clearYes: () => this.setState({ confirmClear: false, cleared: true, week: [null, null, null, null, null, null, null], turns: [], exch: 0, sessionSaved: false }),
+      obDots: [0, 1, 2].map((i) => ({ bg: i === s.obStep ? 'var(--accent)' : 'var(--surface-2)' })),
+      orbWelcome: 72,
+      orbPick: 170,
+      obVoiceName: selVoice.name,
+      obVoiceDesc: selVoice.desc,
+      obVoiceDur: selVoice.dur,
+      obOrbState: s.voicePlay === s.voice ? 'speaking' : 'idle',
+      obPlay: () => {
+        const id = this.state.voice;
+        this.setState({ voicePlay: id, quoteFor: id });
+        this.after(2400, () => { if (this.state.voicePlay === id) this.setState({ voicePlay: null }); });
+      },
+      obPlayLabel: 'Escuchar una muestra de ' + selVoice.name,
+      obQuoteShow: s.quoteFor === s.voice,
+      obQuote: selVoice.quote,
+      obQuoteHint: s.quoteFor !== s.voice,
+      voiceTabs: this.VOICES.map((v) => ({
+        name: v.name,
+        pick: () => this.setState({ voice: v.id, voicePlay: null, quoteFor: null }),
+        bg: s.voice === v.id ? 'var(--surface-1)' : 'transparent',
+        color: s.voice === v.id ? 'var(--text-1)' : 'var(--text-2)',
+        border: s.voice === v.id ? 'var(--accent-a40)' : 'var(--border-1)',
+      })),
+      voices: this.VOICES.map((v) => ({
+        ...v,
+        selected: s.voice === v.id,
+        playing: s.voicePlay === v.id,
+        still: s.voicePlay !== v.id,
+        bg: s.voice === v.id ? 'var(--accent-a06)' : 'var(--surface-1)',
+        border: s.voice === v.id ? 'var(--accent-a40)' : 'var(--border-1)',
+        playLabel: 'Escuchar una muestra de ' + v.name,
+        pick: () => this.setState({ voice: v.id }),
+        play: () => {
+          this.setState({ voicePlay: v.id, voice: v.id });
+          this.after(1800, () => { if (this.state.voicePlay === v.id) this.setState({ voicePlay: null }); });
+        },
+      })),
+    };
+  }
+}
+</script>
+</body>
+</html>
