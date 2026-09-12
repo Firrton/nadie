@@ -1,0 +1,11 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "nadie-frontend",
+      "runtimeExecutable": "pnpm",
+      "runtimeArgs": ["--dir", "frontend/handoff_nadie", "dev", "--port", "5173", "--strictPort"],
+      "port": 5173
+    }
+  ]
+}
