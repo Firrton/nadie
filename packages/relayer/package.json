@@ -3,8 +3,11 @@
   "version": "0.1.0",
   "private": true,
   "type": "module",
-  "description": "Nadie signed meta-transaction relayer skeleton. Behavior arrives in Goal 8.",
+  "description": "Nadie transaction relayer: pays gas for signed ConsentRegistry grants and revocations only.",
   "license": "MIT",
+  "engines": {
+    "node": ">=20.19.0"
+  },
   "exports": {
     ".": {
       "types": "./dist/index.d.ts",
@@ -16,7 +19,21 @@
   "types": "./dist/index.d.ts",
   "scripts": {
     "build": "tsc -b",
-    "test": "node --test",
+    "dev": "tsx --env-file=../../.env src/server.ts",
+    "regenerate:abi": "node scripts/regenerate-abi.mjs",
+    "start": "node --env-file=../../.env dist/server.js",
+    "test": "vitest run",
     "typecheck": "tsc -b --noEmit false && tsc --noEmit -p tsconfig.json"
+  },
+  "dependencies": {
+    "@hono/node-server": "2.1.1",
+    "hono": "4.13.7",
+    "viem": "2.56.3",
+    "zod": "4.6.2"
+  },
+  "devDependencies": {
+    "@types/node": "22.20.2",
+    "tsx": "4.23.13",
+    "vitest": "3.2.7"
   }
 }

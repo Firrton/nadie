@@ -1,1 +1,12 @@
-export {};
+export { createRelayerApp } from "./app";
+export type { RelayerAppDeps, RelayerHttpConfig } from "./app";
+export { validateRelayerStartup } from "./bootstrap";
+export { parseRelayerEnvironment } from "./config";
+export { MemoryIdempotencyStore } from "./ports";
+export type { ChainRelayerPort, IdempotencyStore, SignatureRecoveryPort } from "./ports";
+export { ChainUnavailableError, RelayService, RelayerError, SimulationRejectedError } from "./relayer";
+export type { RelayerConfig, RelayServiceDeps } from "./relayer";
+export { createViemSignatureRecovery } from "./security";
+export { GRANT_TYPES, REVOKE_TYPES } from "./types";
+export type { GrantRelayRequest, RelayRequest, RevokeRelayRequest, TransactionStatus } from "./types";
+export { createViemRelayer } from "./viem-chain";
