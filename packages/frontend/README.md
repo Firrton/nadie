@@ -53,6 +53,17 @@ pnpm --filter @nadie/frontend dev
 Los tests corren con `pnpm --filter @nadie/frontend test`, o con
 `pnpm -r run test` desde la raíz junto con el resto de los paquetes.
 
+El test de punta a punta va aparte porque necesita Chromium, y el suite por
+defecto no puede depender de una descarga de 94MB:
+
+```bash
+pnpm --filter @nadie/frontend exec playwright install chromium   # una sola vez
+pnpm --filter @nadie/frontend test:e2e
+```
+
+Abre un navegador real, recorre una sesión completa sobre el build de
+producción y verifica que **ninguna** petición salga del origen local.
+
 Ábrelo en el inspector móvil (390 × 844). Para empezar en Home en vez del
 onboarding, cambia `initialScreen` en `src/App.jsx`:
 
