@@ -74,7 +74,14 @@ export default function Closing({
     : 'Soltaste el peso del día — el trabajo, la casa, lo acumulado. Lo nombraste sin rodeos.';
 
   return (
-    <div className="anim-fade-up" style={{ flex: 1, display: 'flex', flexDirection: 'column', overflowY: 'auto', padding: '0 var(--screen-pad)' }}>
+    /* Los CTA viven FUERA del área que scrollea, como los controles de
+       Conversation. Al calificar, la tira de la semana y la nota empujan el
+       contenido hacia abajo, y en un teléfono con notch eso dejaba "Volver al
+       inicio" debajo del pliegue: el usuario acababa de calificar su ánimo y
+       se quedaba sin salida visible. La salida no puede depender de que sobre
+       espacio. */
+    <div className="anim-fade-up" style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
+      <div style={{ flex: 1, minHeight: 0, overflowY: 'auto', display: 'flex', flexDirection: 'column', padding: '0 var(--screen-pad)' }}>
       <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', textAlign: 'center', padding: 'var(--space-9) 0 var(--space-7)' }}>
         <VoiceOrb size={84} />
         <h1 className="t-title" style={{ marginTop: 'var(--space-6)' }}>Quedó dicho.</h1>
@@ -126,7 +133,9 @@ export default function Closing({
         )}
       </div>
 
-      <div style={{ padding: 'var(--space-5) 0 var(--space-6)', display: 'flex', flexDirection: 'column', gap: 'var(--space-2)' }}>
+      </div>
+
+      <div style={{ flex: 'none', padding: 'var(--space-4) var(--screen-pad) var(--space-6)', display: 'flex', flexDirection: 'column', gap: 'var(--space-2)' }}>
         <button type="button" className="n-btn n-btn--primary n-btn--lg n-btn--full" onClick={onHome}>Volver al inicio</button>
         <button type="button" className="n-btn n-btn--ghost n-btn--md n-btn--full" onClick={onOpenJourney}>Ver tu camino</button>
       </div>
