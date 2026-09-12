@@ -84,9 +84,9 @@ pnpm test:privacy
 
 ## State of the build
 
-- **Working:** architecture and development specifications.
-- **Mocked:** none yet.
-- **Roadmap:** application implementation, contracts, services, deployment, and demo.
+- **Working:** the mobile app (mood log, journaling, "your path"), core's frozen contracts and runtime schemas, and local inference through WebLLM behind a flag. 162 unit tests plus one end-to-end test that drives a real browser.
+- **Mocked:** speech in and out. The text path is real and works without a microphone.
+- **Roadmap:** installable PWA, the encrypted vault, the sharing flow, gateway and relayer, and the professional's portal.
 
 Update this section as each implementation branch is reviewed and merged.
 
@@ -95,18 +95,19 @@ Update this section as each implementation branch is reviewed and merged.
 ```
 packages/
   contracts/   ProfessionalRegistry, ConsentRegistry (Solidity, Foundry)
-  core/        Keys, vault, LLM ports, memory, insights, consent. No React.
-  ui/          React app built from scratch: chat and five product screens.
+  core/        Types, runtime schemas and ports. No implementations, no React.
+  frontend/    The React app, and the WebLLM adapter behind core's LLMPort.
   gateway/     Encrypted blob store, releases only on a valid on-chain grant
   relayer/     Submits signed meta-transactions, pays gas
-  clinician/   Professional portal: open, decrypt, reply
 docs/
   ARQUITECTURA.MD   Full design
   REGLAS.md         Development rules and invariants
   PLAN_BACKEND.md   Sequential backend work units and acceptance criteria
 ```
 
-**Dependency rule:** `ui` and `clinician` import `core` only. `core` imports contract ABIs only. The UI never touches crypto, viem, or WebLLM directly. If a screen needs something, add a method to `core`.
+**Dependency rule:** the app depends on core's PORTS; the implementations are injected at the composition root. `core` is contracts only — types, runtime schemas and port interfaces, with no implementations — so an adapter lives next to whoever uses it, not inside core. Putting the WebLLM adapter in `core` would make a WebGPU library a dependency of `gateway` and `relayer`, which run in Node.
+
+What this buys, concretely: no screen imports WebLLM, viem, or any crypto. Screens talk to the app's state, the state talks to a port, and `src/main.jsx` is the single file that decides which implementation fills that port. A test can swap in a fake with one argument, which is why the adapter is covered without downloading a model.
 
 ## Architecture in one paragraph
 
@@ -121,12 +122,18 @@ TypeScript across the repo. React and Vite for the app. WebLLM over WebGPU for l
 ```bash
 # Requires Node 20+, pnpm, and a WebGPU-capable browser
 pnpm install
-pnpm --filter contracts test
-cp .env.example .env        # set RPC URL, contract addresses, relayer key
-pnpm dev                    # app on :5173, gateway on :8787, relayer on :8788
+pnpm --filter @nadie/frontend dev     # the app, on :5173
+pnpm --filter @nadie/frontend test    # unit tests
+pnpm --filter @nadie/frontend test:e2e  # drives a real browser; needs Chromium
 ```
 
-First run downloads the model into the browser cache. This takes a few minutes and only happens once. Use the seed button in Settings to load 21 days of synthetic check-ins.
+Local inference is **off by default** and the app runs on a scripted stand-in, so the demo needs no download. Add `?ia=local` to the URL to turn on the real model.
+
+The first run with the real model downloads the weights into the browser cache. How long that takes depends entirely on the connection: we measured the same CDN at 37 KB/s and at 3.4 MB/s on the same day, so the app shows a percentage and only offers a time estimate once the measurement holds steady.
+
+`VITE_MODELOS_BASE` serves the weights from your own origin instead of the public CDN. For an app that presents itself as private, being able to drop a third party from the largest file it downloads is worth the configuration.
+
+`pnpm --filter @nadie/contracts test` needs Foundry (`forge`) on PATH.
 
 The core MVP targets a WebGPU-capable demo device. Enclave fallback remains behind a feature flag and is implemented only after the local path and sharing flow are stable.
 
