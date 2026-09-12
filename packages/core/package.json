@@ -3,8 +3,11 @@
   "version": "0.1.0",
   "private": true,
   "type": "module",
-  "description": "Nadie core: public contracts, ports and runtime schemas. No implementations.",
+  "description": "Nadie core: contracts, runtime schemas and the v1 encrypted-package format. No implementations of ports.",
   "license": "MIT",
+  "engines": {
+    "node": ">=20.19.0"
+  },
   "exports": {
     ".": {
       "types": "./dist/index.d.ts",
@@ -22,6 +25,9 @@
     "typecheck": "tsc -b --noEmit false && tsc --noEmit -p tsconfig.json"
   },
   "dependencies": {
+    "@hpke/core": "1.9.0",
+    "@noble/hashes": "2.3.0",
+    "@scure/base": "2.2.0",
     "zod": "^4.6.2"
   },
   "devDependencies": {

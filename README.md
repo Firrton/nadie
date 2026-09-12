@@ -141,8 +141,8 @@ The core MVP targets a WebGPU-capable demo device. Enclave fallback remains behi
 
 | Contract | Network | Address |
 |---|---|---|
-| ProfessionalRegistry | HashKey Chain Testnet (133) | `TODO_DEPLOY_ADDRESS` |
-| ConsentRegistry | HashKey Chain Testnet (133) | `TODO_DEPLOY_ADDRESS` |
+| ProfessionalRegistry | HashKey Chain Testnet (133) | [`0xD615074c2603336fa0Da8AF44B5CCB9D9C0B2F9c`](https://testnet-explorer.hsk.xyz/address/0xD615074c2603336fa0Da8AF44B5CCB9D9C0B2F9c) |
+| ConsentRegistry | HashKey Chain Testnet (133) | [`0xdc3c4c07e4675cf1BBDEa627026e92170f9F5AE1`](https://testnet-explorer.hsk.xyz/address/0xdc3c4c07e4675cf1BBDEa627026e92170f9F5AE1) |
 
 HashKey Chain Testnet is the reference deployment so the project can qualify for the HashKey track. Additional EVM deployments are roadmap work.
 

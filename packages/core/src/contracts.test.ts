@@ -1,10 +1,13 @@
 import { describe, expect, it } from "vitest";
 
+import {
+  encryptPackage,
+  generateEncryptionKeyPair,
+} from "./encrypted-package";
 import type {
   AuditEntry,
   CheckIn,
   ConsentGrant,
-  EncryptedPackage,
   FirstOpening,
   MemoryRecord,
   MoodTrend,
@@ -15,6 +18,8 @@ import type {
   SharedRecord,
 } from "./contracts";
 import { EMOTION_LABELS, MEMORY_TYPES, RISK_LEVELS } from "./schemas";
+
+const PROFESSIONAL = "0x0000000000000000000000000000000000000002";
 
 const validGrant: ConsentGrant = {
   userPseudonym: "0x0000000000000000000000000000000000000001",
@@ -96,19 +101,26 @@ describe("contratos de tipos", () => {
     expect(Object.keys(validOpening)).not.toContain("openCount");
   });
 
-  it("EncryptedPackage no tiene campo de texto claro", () => {
-    const pkg: EncryptedPackage = {
-      version: 1,
-      ciphertext: "0x" + "ef".repeat(32),
-      nonce: "0x" + "12".repeat(12),
-      wrappedKey: "0x" + "34".repeat(32),
-    };
+  it("EncryptedPackage v1 no tiene campo de texto claro ni clave privada", async () => {
+    const kp = await generateEncryptionKeyPair();
+    const pkg = await encryptPackage(new TextEncoder().encode("secreto"), kp.publicKey, {
+      professional: PROFESSIONAL,
+      scope: "graph-summary",
+    });
     expect(Object.keys(pkg).sort()).toEqual([
+      "algorithm",
       "ciphertext",
+      "encapsulatedKey",
+      "metadata",
       "nonce",
+      "recipientPublicKey",
       "version",
       "wrappedKey",
     ]);
+    // La clave privada jamás viaja en el envelope.
+    expect(JSON.stringify(pkg)).not.toContain(kp.privateKey.toString());
+    // El plaintext jamás viaja en el envelope.
+    expect(JSON.stringify(pkg)).not.toContain("secreto");
   });
 
   it("Session, CheckIn, MemoryRecord, MoodTrend y registros compartidos reflejan la arquitectura", () => {
