@@ -98,12 +98,76 @@ async function bateria(adaptador) {
 window.__resultados = {};
 window.__progreso = '';
 
-window.correr = async function correr(modeloId) {
-  log('\n══════ ' + modeloId + ' ══════');
+/* MODO LOCAL: los pesos salen de servidor-local.mjs en vez del CDN.
+
+   No hace falta tocar nada del producto para esto, y eso es exactamente lo que
+   la inyección estaba para permitir: `crearEngineWebLLM` ya acepta un appConfig
+   por opciones, así que el banco le pasa uno que apunta a 127.0.0.1 y listo.
+   Si para probar local hubiera que editar modelos.js, el banco estaría midiendo
+   un código distinto del que ships.
+
+   El appConfig local es IDÉNTICO al de producción salvo el host: mismo
+   model_id, mismo overrides, y la misma forma de URL — porque el servidor
+   entiende el `resolve/main/` que WebLLM agrega solo. */
+const BASE_LOCAL = 'http://127.0.0.1:8899';
+
+export function appConfigLocal(modeloId, base = BASE_LOCAL) {
+  const peldano = ESCALERA.find((m) => m.id === modeloId);
+  return {
+    model_list: [
+      {
+        model: base + '/' + modeloId,
+        model_id: modeloId,
+        model_lib: base + '/' + modeloId + '/modelo.wasm',
+        vram_required_MB: peldano ? peldano.vramMB : undefined,
+        low_resource_required: true,
+        overrides: { context_window_size: 4096 },
+      },
+    ],
+  };
+}
+
+/* Chequea que el servidor local tenga el modelo COMPLETO antes de arrancar.
+   Descubrir que falta un shard a los diez minutos de carga es la peor forma
+   posible de enterarse. */
+window.verificarLocal = async function verificarLocal(modeloId, base = BASE_LOCAL) {
+  const url = base + '/' + modeloId + '/resolve/main/ndarray-cache.json';
+  const r = await fetch(url);
+  if (!r.ok) return { listo: false, motivo: 'no responde ' + url + ' (' + r.status + ')' };
+
+  const cache = await r.json();
+  const piezas = (cache.records || []).map((x) => x.dataPath);
+  const faltan = [];
+  for (const pieza of piezas) {
+    const h = await fetch(base + '/' + modeloId + '/resolve/main/' + pieza, { method: 'HEAD' });
+    if (!h.ok) faltan.push(pieza);
+  }
+  const wasm = await fetch(base + '/' + modeloId + '/modelo.wasm', { method: 'HEAD' });
+  if (!wasm.ok) faltan.push('modelo.wasm');
+
+  return { listo: faltan.length === 0, piezas: piezas.length, faltan };
+};
+
+window.correrLocal = async function correrLocal(modeloId, base = BASE_LOCAL) {
+  const chequeo = await window.verificarLocal(modeloId, base);
+  if (!chequeo.listo) {
+    log('\n✗ el modelo local no está completo: ' + JSON.stringify(chequeo));
+    return chequeo;
+  }
+  log('\n(local: ' + chequeo.piezas + ' piezas presentes)');
+  return window.correr(modeloId, appConfigLocal(modeloId, base));
+};
+
+window.correr = async function correr(modeloId, appConfig) {
+  log('\n══════ ' + modeloId + (appConfig ? ' [local]' : ' [CDN]') + ' ══════');
   estado.textContent = 'cargando ' + modeloId + '…';
 
+  const crearEngine = appConfig
+    ? (m, o) => crearEngineWebLLM(m, { ...o, appConfig })
+    : crearEngineWebLLM;
+
   const adaptador = crearWebLLM({
-    crearEngine: crearEngineWebLLM,
+    crearEngine,
     modelo: modeloId,
     onProgreso: (p) => {
       window.__progreso = modeloId + ': ' + (p.text || '').slice(0, 90);
