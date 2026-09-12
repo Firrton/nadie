@@ -14,8 +14,8 @@ import Settings from './screens/Settings.jsx';
 
 const NAV_SCREENS = ['home', 'camino', 'ajustes'];
 
-export default function App() {
-  const n = useNadie();
+export default function App({ llm }) {
+  const n = useNadie({ llm });
   const { screen } = n;
   const showNav = NAV_SCREENS.includes(screen);
 

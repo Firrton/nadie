@@ -1,4 +1,11 @@
-import { appConfigDe } from './modelos.js';
+import { ESCALERA, appConfigDe } from './modelos.js';
+
+/* De dónde salen los pesos. Por defecto, el CDN de HuggingFace; un despliegue
+   que quiera alojarlos en su propio dominio define VITE_MODELOS_BASE y no toca
+   nada más. Para una app que se presenta como privada, poder sacarse de encima
+   la dependencia de un tercero en el archivo más grande que baja no es un
+   detalle de configuración. */
+const BASE_DE_MODELOS = (import.meta.env && import.meta.env.VITE_MODELOS_BASE) || null;
 
 /* EL ÚNICO ARCHIVO DE LA APP QUE IMPORTA @mlc-ai/web-llm.
 
@@ -23,6 +30,6 @@ export async function crearEngineWebLLM(modelo, opciones = {}) {
 
   return webllm.CreateMLCEngine(modelo, {
     ...opciones,
-    appConfig: opciones.appConfig || appConfigDe(),
+    appConfig: opciones.appConfig || appConfigDe(ESCALERA, BASE_DE_MODELOS),
   });
 }

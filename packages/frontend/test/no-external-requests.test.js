@@ -30,8 +30,15 @@ import { ESCALERA, HOSTS_DE_MODELO } from '../src/lib/llm/modelos.js';
 const AQUI = fileURLToPath(new URL('.', import.meta.url));
 const PAQUETE = join(AQUI, '..');
 
-/* Namespaces XML: son identificadores, no destinos. El navegador nunca los pide. */
+/* IDENTIFICADORES, no destinos. El navegador nunca los pide.
+
+   Los namespaces XML son el caso clásico. El de json-schema.org es el mismo
+   animal: es el valor de `$schema` que emite zod al derivar un JSON Schema —
+   la URI que NOMBRA el dialecto, no un archivo que alguien baje. (El adaptador
+   igual la saca del esquema que le manda al modelo: ahí es ruido en el prompt.) */
 const NAMESPACES = [
+  'https://json-schema.org/',
+  'http://json-schema.org/',
   'http://www.w3.org/2000/svg',
   'http://www.w3.org/1999/xlink',
   'http://www.w3.org/1999/xhtml',

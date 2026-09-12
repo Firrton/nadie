@@ -71,13 +71,25 @@ export const SIN_PROBAR = [
 
 export const MODELO_POR_DEFECTO = ESCALERA[0].id;
 
-/* El AppConfig que espera WebLLM, armado solo con lo nuestro. */
-export function appConfigDe(escalera = ESCALERA) {
+/* El AppConfig que espera WebLLM, armado solo con lo nuestro.
+
+   `base` permite servir los pesos desde OTRO origen. No es una comodidad de
+   desarrollo: para una app que se presenta como privada, depender del CDN de un
+   tercero para el archivo más grande que baja es una dependencia que conviene
+   poder sacarse. Un despliegue que aloje los pesos en su propio dominio pasa su
+   URL y nada más cambia.
+
+   Cuando hay `base`, los archivos se piden como `<base>/<model_id>/...` y el
+   wasm como `<base>/<model_id>/modelo.wasm`, que es el layout que deja
+   `banco/bajar-modelo.sh`. WebLLM le agrega `resolve/main/` a cualquier URL
+   (cleanModelUrl es incondicional), así que quien sirva esos archivos tiene que
+   entender ese tramo — el servidor del banco lo hace. */
+export function appConfigDe(escalera = ESCALERA, base = null) {
   return {
     model_list: escalera.map((m) => ({
-      model: HF + m.id,
+      model: base ? base + '/' + m.id : HF + m.id,
       model_id: m.id,
-      model_lib: LIBS + m.lib,
+      model_lib: base ? base + '/' + m.id + '/modelo.wasm' : LIBS + m.lib,
       vram_required_MB: m.vramMB,
       low_resource_required: true,
       overrides: { context_window_size: 4096 },

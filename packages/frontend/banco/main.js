@@ -48,10 +48,17 @@ const prohibidasEn = (texto) => {
 
 const INTENTOS_JSON = 3;
 
-/* Cuántas veces se repite la conversación. Con temperature 0.7 sobre un modelo
-   chico la varianza entre corridas es enorme: una sola pasada no distingue una
-   mejora de un golpe de suerte. */
-const VUELTAS_CONVERSACION = 3;
+/* Cuántas veces se repite la conversación.
+
+   Empezó en 3 vueltas (9 respuestas) y NO ALCANZABA: el mismo código, sin tocar
+   una línea, midió 9/9 en una corrida y 7/9 en la siguiente. Con eso se puede
+   afirmar un cambio grande —el 100% de rechazos del prompt viejo contra el 11%
+   del nuevo— pero NO una diferencia de una o dos respuestas.
+
+   Se sube a 5 vueltas. Sigue siendo poco para deltas finos: la regla honesta es
+   que una diferencia de menos de ~20% entre dos corridas no se puede llamar
+   mejora sin repetir la medición varias veces. */
+const VUELTAS_CONVERSACION = 5;
 
 /* Señales de que el modelo SE FUE DEL ROL: dejó de acompañar y se refugió en
    derivar. Ante las tres líneas normales de DEMO_USER_LINES —un día que pesó,
