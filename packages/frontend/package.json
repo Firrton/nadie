@@ -7,13 +7,14 @@
   "license": "MIT",
   "scripts": {
     "dev": "vite",
-    "build": "vite build",
+    "build": "pnpm --filter @nadie/core build && vite build",
     "preview": "vite preview",
-    "test": "TZ=America/Mexico_City vitest run --exclude '**/e2e/**'",
-    "test:watch": "TZ=America/Mexico_City vitest --exclude '**/e2e/**'",
-    "test:e2e": "vite build && vitest run test/e2e"
+    "test": "pnpm --filter @nadie/core build && TZ=America/Mexico_City vitest run --exclude '**/e2e/**'",
+    "test:watch": "pnpm --filter @nadie/core build && TZ=America/Mexico_City vitest --exclude '**/e2e/**'",
+    "test:e2e": "pnpm run build && vitest run test/e2e"
   },
   "dependencies": {
+    "@nadie/core": "workspace:*",
     "react": "^18.3.1",
     "react-dom": "^18.3.1"
   },
