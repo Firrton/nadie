@@ -26,7 +26,7 @@ Existing mental health apps ask for your email, your phone number, and your trus
 
 ## What Nadie does
 
-- **Listens on your device.** The model runs in your browser. After the model and application assets are cached, a complete private session makes zero outbound network requests, and there is a test that proves it.
+- **Listens on your device.** The model runs in your browser. After the model and application assets are cached, a complete private session makes zero outbound network requests, and there is a test that proves it: [`packages/frontend/test/no-external-requests.test.js`](packages/frontend/test/no-external-requests.test.js), run with `pnpm -r run test`. It fails the build if any source file or bundled asset points at a third-party origin.
 - **Remembers, and shows you what it remembers.** Mood check-ins, session summaries, and the things that matter to you build a picture over time. You can read, edit, or delete any of it.
 - **Walks you to a human.** When you choose to, Nadie packages a summary, you sign it, and a verified psychologist can open it for a limited time. You see the first opening. You can revoke.
 
