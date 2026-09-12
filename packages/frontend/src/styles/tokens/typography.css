@@ -1,11 +1,13 @@
 /* Nadie — tipografía.
    Serif editorial (Instrument Serif) para el logotipo "nadie" y los titulares
-   emocionales. Sans limpio (Hanken Grotesk) para UI, botones y cuerpo.
-   Dos pesos: regular (400) y medium (500). Siempre sentence case. */
+   emocionales. Sans (Instrument Sans, la hermana de la serif) para UI, botones
+   y cuerpo. Dos pesos: regular (400) y medium (500). Siempre sentence case.
+
+   Esta es la única declaración de las familias. theme.css ya no las pisa. */
 
 :root {
   --font-serif: 'Instrument Serif', 'Iowan Old Style', Georgia, serif;
-  --font-sans: 'Hanken Grotesk', system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --font-sans: 'Instrument Sans', system-ui, -apple-system, 'Segoe UI', sans-serif;
 
   --weight-regular: 400;
   --weight-medium: 500;

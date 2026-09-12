@@ -23,11 +23,4 @@
   /* color del ánimo — lo único con color */
   --mood-up: #7fa4d4;
   --mood-down: #d26a56;
-
-  /* la sans del logotipo. Instrument Sans es la hermana de Instrument Serif */
-  --font-sans: 'Instrument Sans', system-ui, -apple-system, sans-serif;
-}
-
-body {
-  font-family: var(--font-sans);
 }

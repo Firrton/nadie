@@ -301,8 +301,10 @@ de la ayuda profesional.
 - **No existe logotipo dibujado.** La marca se escribe como texto: "nadie" en
   minúscula, en Instrument Serif. No crear un isotipo alterno.
 - Iconos: glifos de Lucide (licencia ISC), copiados en `Icon.jsx` y `Glyphs.jsx`.
-- Fuentes: Instrument Serif + Instrument Sans desde Google Fonts (ver
-  `index.html`). `styles/assets/fonts/` trae Hanken Grotesk como alternativa.
+- Fuentes: Instrument Serif + Instrument Sans, **self-hosted** en
+  `styles/assets/fonts/` y declaradas en `tokens/fonts.css`. No se cargan desde
+  Google ni desde ningún otro CDN — la app no habla con terceros, y hay un test
+  que lo verifica (`test/no-external-requests.test.js`).
 
 ## Files
 
