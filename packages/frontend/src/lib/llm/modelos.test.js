@@ -7,6 +7,7 @@ import {
   SIN_PROBAR,
   appConfigDe,
   elegirModelo,
+  escaleraQueEntra,
 } from './modelos.js';
 
 const capacidad = (maxBufferMB, maxStorageBindingMB = 2048) => ({
@@ -61,6 +62,19 @@ describe('la escalera', () => {
   it('el AppConfig solo lleva los modelos que elegimos', () => {
     expect(appConfigDe().model_list).toHaveLength(ESCALERA.length);
     expect(appConfigDe().model_list.length).toBeLessThan(10);
+  });
+});
+
+describe('escaleraQueEntra', () => {
+  it('devuelve todos los que entran, no solo el mejor: es el plan B escrito', () => {
+    expect(escaleraQueEntra(capacidad(4096))).toHaveLength(ESCALERA.length);
+    expect(escaleraQueEntra(capacidad(1500)).map((m) => m.peldano)).toEqual(['celular']);
+    expect(escaleraQueEntra(capacidad(256))).toEqual([]);
+  });
+
+  it('mantiene el orden de la escalera', () => {
+    const ids = escaleraQueEntra(capacidad(4096)).map((m) => m.id);
+    expect(ids).toEqual(ESCALERA.map((m) => m.id));
   });
 });
 

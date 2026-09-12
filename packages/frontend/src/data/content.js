@@ -38,4 +38,29 @@ export const DEMO_MONTH = [
   null, 5, 7, null, 5, 7, 5, 7, null, 7, 7, 9, 7,
 ];
 
+/* Frases para la espera de la primera carga del modelo.
+
+   Bajar los pesos tarda, y una barra sola es hostil. Estas frases las eligió el
+   equipo; no son de relleno ni generadas: cada una viene con su autor y se
+   muestra tal cual. Si alguna se cambia, se cambia acá y en ningún otro lado.
+
+   Se citan con atribución porque una frase sin autor es una frase apropiada. */
+export const FRASES_DE_ESPERA = [
+  { texto: 'En medio del invierno, aprendí por fin que había en mí un verano invencible.', autor: 'Albert Camus' },
+  { texto: 'El hombre que mueve montañas comienza apartando pequeñas piedras.', autor: 'Confucio' },
+  { texto: 'La vida no es un problema que deba ser resuelto, sino una realidad que debe ser experimentada.', autor: 'Søren Kierkegaard' },
+  { texto: 'Un viaje de mil millas comienza con un solo paso.', autor: 'Lao Tsé' },
+  { texto: 'Nuestra mayor gloria no es no caer nunca, sino levantarnos cada vez que caemos.', autor: 'Atribuida a Confucio' },
+  { texto: 'El impedimento a la acción avanza la acción. Lo que se interpone en el camino se convierte en el camino.', autor: 'Marco Aurelio' },
+  { texto: 'La esperanza es el sueño del hombre despierto.', autor: 'Aristóteles' },
+  { texto: 'Vivir es nacer a cada instante.', autor: 'Erich Fromm' },
+  { texto: 'El que tiene un porqué para vivir puede soportar casi cualquier cómo.', autor: 'Friedrich Nietzsche' },
+  { texto: 'Acepta las cosas a las que el destino te ata, y ama a las personas que el destino te trae, pero hazlo con todo tu corazón.', autor: 'Marco Aurelio' },
+  { texto: 'El alma tiene ilusiones como el pájaro alas; eso es lo que la sostiene.', autor: 'Víctor Hugo' },
+  { texto: 'Nunca es demasiado tarde para ser lo que podrías haber sido.', autor: 'George Eliot' },
+  { texto: 'La felicidad depende de nosotros mismos.', autor: 'Aristóteles' },
+  { texto: 'No te dejes abrumar por el futuro. Lo enfrentarás, si es necesario, con las mismas armas de la razón que hoy te arman contra el presente.', autor: 'Marco Aurelio' },
+  { texto: 'Aun si supiera que el mundo se hará pedazos mañana, hoy aún plantaría mi manzano.', autor: 'Martín Lutero' },
+];
+
 export const CRISIS_LINE = 'México: Línea de la Vida, 800 911 2000 · España: línea 024';

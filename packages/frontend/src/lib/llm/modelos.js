@@ -119,11 +119,21 @@ const MARGEN = 1.2;
    Devolver null NO es un error: ARQUITECTURA §4.3 dice que si no hay WebGPU o
    memoria suficiente, se ofrece el nivel 2 (enclave). Quien llama decide. */
 export function elegirModelo(capacidad, escalera = ESCALERA) {
-  if (!capacidad || !capacidad.soportado) return null;
-  if (capacidad.maxStorageBindingMB != null && capacidad.maxStorageBindingMB <= PISO_WEBGPU_MB) return null;
+  return escaleraQueEntra(capacidad, escalera)[0] || null;
+}
+
+/* TODOS los peldaños que entran, del más capaz al más liviano.
+
+   Existe porque elegir uno no alcanza: un modelo puede entrar en el presupuesto
+   y aun así no cargar —driver, memoria fragmentada, un shard que no baja— y en
+   ese caso bajar un peldaño es mejor que quedarse sin IA. La lista es el plan B
+   escrito de antemano. */
+export function escaleraQueEntra(capacidad, escalera = ESCALERA) {
+  if (!capacidad || !capacidad.soportado) return [];
+  if (capacidad.maxStorageBindingMB != null && capacidad.maxStorageBindingMB <= PISO_WEBGPU_MB) return [];
 
   const presupuesto = capacidad.maxBufferMB;
-  if (!presupuesto) return null;
+  if (!presupuesto) return [];
 
-  return escalera.find((m) => m.vramMB * MARGEN <= presupuesto) || null;
+  return escalera.filter((m) => m.vramMB * MARGEN <= presupuesto);
 }
