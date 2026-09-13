@@ -103,7 +103,7 @@ const servicioDeEjemplo = {
 function Aviso() {
   return (
     <div style={{ position: "sticky", top: 0, zIndex: 1, background: "var(--surface-2)", color: "var(--text-1)", textAlign: "center", padding: "6px 12px", fontSize: "var(--text-micro-size)" }}>
-      Vista de diseño con datos de ejemplo. No hay wallet, cadena ni personas reales.
+      Vista de diseño con datos de ejemplo. No hay billetera digital, cadena ni personas reales.
     </div>
   );
 }

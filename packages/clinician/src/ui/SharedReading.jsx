@@ -60,8 +60,8 @@ export default function SharedReading({ text, onClear }) {
     return (
       <section className="n-card reading" aria-label="Contenido descifrado">
         <div className="section-head">
-          <p className="t-micro">Descifrado en este equipo</p>
-          <button className="n-btn n-btn--ghost n-btn--md" onClick={onClear}>Quitar de la pantalla</button>
+          <p className="t-micro">Solo se ve en este equipo</p>
+          <button className="n-btn n-btn--ghost n-btn--md" onClick={onClear}>Cerrar</button>
         </div>
         <p className="t-body reading-raw">{text}</p>
       </section>
@@ -71,12 +71,12 @@ export default function SharedReading({ text, onClear }) {
   return (
     <section className="n-card reading" aria-label="Contenido descifrado">
       <div className="section-head">
-        <p className="t-micro">Descifrado en este equipo · {shortDate(document.from)} – {shortDate(document.to)}</p>
-        <button className="n-btn n-btn--ghost n-btn--md" onClick={onClear}>Quitar de la pantalla</button>
+        <p className="t-micro">Solo se ve en este equipo · {shortDate(document.from)} – {shortDate(document.to)}</p>
+        <button className="n-btn n-btn--ghost n-btn--md" onClick={onClear}>Cerrar</button>
       </div>
 
       <h2 className="t-title">{document.title}</h2>
-      <p className="t-small" style={{ marginTop: "var(--space-2)" }}>Resumen redactado en el teléfono de la persona y aprobado por ella antes de enviarlo.</p>
+      <p className="t-small" style={{ marginTop: "var(--space-2)" }}>Resumen escrito en el teléfono de la persona. Ella lo leyó y decidió enviártelo.</p>
       <p className="reading-summary" style={{ marginTop: "var(--space-5)" }}>{document.summary}</p>
 
       {document.journal.length > 0 ? (

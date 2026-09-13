@@ -4,7 +4,7 @@ import type { Address, Hex } from "viem";
 import type { AccessChallenge, GatewayPort } from "../ports";
 
 export class GatewayAccessError extends Error {
-  constructor(message = "El paquete no está disponible para esta profesional.") {
+  constructor(message = "Esto ya no está disponible para ti.") {
     super(message);
     this.name = "GatewayAccessError";
   }
@@ -42,12 +42,12 @@ export class HttpGatewayAdapter implements GatewayPort {
         body: JSON.stringify({ consentId, professional: professional.toLowerCase() }),
       });
     } catch {
-      throw new GatewayAccessError("El servicio de paquetes no está disponible.");
+      throw new GatewayAccessError("No pudimos conectar con el servicio. Intenta de nuevo en un momento.");
     }
-    if (!response.ok) throw new GatewayAccessError("No se pudo pedir el desafío de acceso.");
+    if (!response.ok) throw new GatewayAccessError("No se pudo confirmar tu acceso. Intenta de nuevo.");
 
     const body: unknown = await response.json().catch(() => undefined);
-    if (!isChallenge(body)) throw new GatewayAccessError("El servicio de paquetes devolvió un desafío inválido.");
+    if (!isChallenge(body)) throw new GatewayAccessError("No se pudo confirmar tu acceso. Intenta de nuevo.");
     return body;
   }
 
@@ -60,7 +60,7 @@ export class HttpGatewayAdapter implements GatewayPort {
         body: JSON.stringify({ challengeId, signature }),
       });
     } catch {
-      throw new GatewayAccessError("El servicio de paquetes no está disponible.");
+      throw new GatewayAccessError("No pudimos conectar con el servicio. Intenta de nuevo en un momento.");
     }
     if (!response.ok) throw new GatewayAccessError();
     return new Uint8Array(await response.arrayBuffer());

@@ -38,6 +38,30 @@ describe("parseSharedDocument", () => {
     expect(parseSharedDocument(withoutJournal)?.journal).toEqual([]);
   });
 
+  /* El resumen lo redacta un modelo: nada impide que contenga la frase del
+     encabezado. El diario es siempre la ÚLTIMA sección, y solo cuenta como
+     diario si lo que sigue son días. */
+  it("a summary that mentions the journal header does not cut the summary", () => {
+    const tricky = document.replace(
+      "Le pesa sentir que molesta.",
+      "Le pesa sentir que molesta.\nDiario de ánimo (1 a 10)\nlo repite como título de su cuaderno.",
+    );
+
+    const parsed = parseSharedDocument(tricky);
+
+    expect(parsed?.summary).toContain("lo repite como título de su cuaderno.");
+    expect(parsed?.journal).toHaveLength(2);
+  });
+
+  it("the header phrase inside a summary without journal stays in the summary", () => {
+    const withoutJournal = document.split("\n\nDiario de ánimo")[0] + "\nDiario de ánimo (1 a 10)\nfin del resumen.";
+
+    const parsed = parseSharedDocument(withoutJournal);
+
+    expect(parsed?.summary).toContain("fin del resumen.");
+    expect(parsed?.journal).toEqual([]);
+  });
+
   /* Si el formato no es el esperado, la pantalla muestra el texto tal cual:
      nunca se esconde ni se reinterpreta lo que la persona mandó. */
   it("returns null for text that is not a shared document", () => {

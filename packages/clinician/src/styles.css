@@ -147,16 +147,38 @@ body { min-height: 100vh; }
   color: var(--text-1);
 }
 
-.reply { margin-top: var(--space-2); }
-.reply textarea {
+/* --- secciones plegables: lo técnico existe, pero no está en el camino --- */
+.details summary {
+  cursor: pointer;
+  list-style: none;
+  min-height: var(--hit-min);
+  display: flex;
+  align-items: center;
+  font-size: var(--text-small-size);
+  color: var(--text-2);
+}
+.details summary::-webkit-details-marker { display: none; }
+.details summary::after { content: "+"; margin-left: var(--space-2); color: var(--dot-inactive); }
+.details[open] summary::after { content: "–"; }
+.details summary:hover { color: var(--text-1); }
+.details summary:focus-visible { outline: 2px solid var(--focus-ring); outline-offset: 2px; border-radius: var(--radius-s); }
+.details-body { display: flex; flex-direction: column; gap: var(--space-2); padding-bottom: var(--space-2); }
+.details-body .mono { margin: 0; overflow-wrap: anywhere; }
+
+.consent-body { min-width: 0; }
+.portal-foot { margin-top: var(--space-8); border-top: 1px solid var(--border-subtle); padding-top: var(--space-3); }
+
+.key-box {
   width: 100%;
-  min-height: 96px;
-  resize: vertical;
+  resize: none;
   background: var(--bg-0);
   color: var(--text-1);
   border: 1px solid var(--border-subtle);
   border-radius: var(--radius-s);
-  padding: var(--space-3) var(--space-4);
-  font: inherit;
+  padding: var(--space-3);
+  overflow-wrap: anywhere;
 }
-.reply textarea:focus-visible { outline: 2px solid var(--focus-ring); outline-offset: 2px; }
+.key-box:focus-visible { outline: 2px solid var(--focus-ring); outline-offset: 2px; }
+
+.check { display: flex; align-items: center; gap: var(--space-2); min-height: var(--hit-min); cursor: pointer; }
+.check input { width: 18px; height: 18px; accent-color: var(--accent); }

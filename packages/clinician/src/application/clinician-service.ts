@@ -34,7 +34,7 @@ export class ClinicianService {
   async dashboard(professional: Address): Promise<Dashboard> {
     const connected = await this.#chain.currentAddress();
     if (!connected || getAddress(connected) !== getAddress(professional)) {
-      throw new Error("La wallet conectada cambió. Vuelve a conectarla.");
+      throw new Error("Cambió la cuenta de tu billetera digital. Vuelve a entrar.");
     }
     const [credential, consents] = await Promise.all([
       this.#chain.credential(professional),
@@ -45,17 +45,17 @@ export class ClinicianService {
 
   registerEncryptionPublicKey(publicKey: string): Promise<Hex> {
     if (!isHex(publicKey) || publicKey.length !== 66 || /^0x0+$/.test(publicKey)) {
-      throw new Error("La llave pública de cifrado no es válida.");
+      throw new Error("La llave que se intentó registrar no es válida.");
     }
     return this.#chain.registerKey(publicKey);
   }
 
   async openAndDownload(consent: ProfessionalConsent, privateKey: Uint8Array): Promise<Uint8Array> {
-    if (privateKey.byteLength !== 32) throw new Error("Primero carga la llave privada X25519 de 32 bytes.");
-    if (!consent.isValid || consent.revoked) throw new Error("Este permiso ya no está disponible.");
+    if (privateKey.byteLength !== 32) throw new Error("Primero usa tu llave de lectura.");
+    if (!consent.isValid || consent.revoked) throw new Error("La persona retiró el acceso o ya venció.");
     const connected = await this.#chain.currentAddress();
     if (!connected || getAddress(connected) !== getAddress(consent.professional)) {
-      throw new Error("La wallet conectada no es la de la profesional autorizada.");
+      throw new Error("Esta cuenta no es la de la profesional con quien se compartió.");
     }
 
     if (consent.firstOpenedAt === 0) await this.#chain.open(consent.consentId);
@@ -66,10 +66,10 @@ export class ClinicianService {
     try {
       const envelope = deserializeEncryptedPackage(serialized);
       if (hashEncryptedPackage(envelope).toLowerCase() !== consent.packageHash.toLowerCase()) {
-        throw new Error("El paquete cifrado no coincide con el hash registrado en la cadena.");
+        throw new Error("Lo que llegó no coincide con lo que la persona compartió, así que no se abrió.");
       }
       if (getAddress(envelope.metadata.professional) !== getAddress(consent.professional)) {
-        throw new Error("El paquete cifrado está dirigido a otra profesional.");
+        throw new Error("Esto se compartió con otra profesional.");
       }
       return await decryptPackage(envelope, privateKey);
     } finally {
@@ -85,7 +85,7 @@ export class ClinicianService {
     }
     const connected = await this.#chain.currentAddress();
     if (!connected || getAddress(connected) !== getAddress(consent.professional)) {
-      throw new Error("La wallet conectada no es la de la profesional autorizada.");
+      throw new Error("Esta cuenta no es la de la profesional con quien se compartió.");
     }
     const responseBytes = stringToBytes(normalized);
     try {
@@ -101,7 +101,7 @@ export class ClinicianService {
 export function parsePrivateKey(input: string): Uint8Array {
   const normalized = input.trim();
   if (!/^0x[0-9a-fA-F]{64}$/.test(normalized)) {
-    throw new Error("Se espera una llave privada X25519 de 32 bytes, con prefijo 0x.");
+    throw new Error("Esa llave de lectura no es válida. Revisa que la hayas pegado completa.");
   }
   return hexToBytes(normalized as Hex);
 }
