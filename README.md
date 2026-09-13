@@ -4,7 +4,9 @@
 
 *Nadie* is Spanish for *nobody*. Who reads what you tell your AI? Nobody.
 
-An emotional companion that runs a language model inside your browser, keeps your mood history on your device, and shares with a verified psychologist only the text you read and sign. Built at the EAG Global Buildathon, Cochabamba, Bolivia, September 11–13, 2026. **Track 02: Local AI, Private AI & User-Owned Data**, with consent and professional credentials deployed on **HashKey Chain Testnet**.
+An emotional companion that runs a language model inside your browser, keeps your mood history on your device, and shares with a verified psychologist only the text you read and sign. Built at the EAG Global Buildathon, Cochabamba, Bolivia, September 11–13, 2026. 
+
+**Track 02: Local AI, Private AI & User-Owned Data**, with consent and professional credentials deployed on **HashKey Chain Testnet**.
 
 | | |
 |---|---|
