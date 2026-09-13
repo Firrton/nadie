@@ -1,0 +1,29 @@
+{
+  "name": "@nadie/e2e",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Local backend end-to-end tests and read-only HashKey smoke checks.",
+  "license": "MIT",
+  "engines": {
+    "node": ">=20.19.0"
+  },
+  "scripts": {
+    "build": "tsc -b",
+    "test:backend-e2e": "vitest run",
+    "smoke:backend:hashkey": "tsx src/hashkey-smoke.ts",
+    "typecheck": "tsc -b --noEmit false && tsc --noEmit -p tsconfig.json"
+  },
+  "dependencies": {
+    "@hono/node-server": "2.1.1",
+    "@nadie/core": "workspace:*",
+    "@nadie/gateway": "workspace:*",
+    "@nadie/relayer": "workspace:*",
+    "viem": "2.56.3"
+  },
+  "devDependencies": {
+    "@types/node": "22.20.2",
+    "tsx": "4.23.13",
+    "vitest": "3.2.7"
+  }
+}

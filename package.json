@@ -12,7 +12,9 @@
   "scripts": {
     "build": "pnpm -r --if-present run build",
     "test": "pnpm -r --if-present run test",
-    "typecheck": "pnpm -r --if-present run typecheck"
+    "typecheck": "pnpm -r --if-present run typecheck",
+    "test:backend-e2e": "pnpm --filter @nadie/contracts build && pnpm --filter @nadie/core build && pnpm --filter @nadie/gateway build && pnpm --filter @nadie/relayer build && pnpm --filter @nadie/e2e test:backend-e2e",
+    "smoke:backend:hashkey": "pnpm --filter @nadie/e2e smoke:backend:hashkey"
   },
   "devDependencies": {
     "typescript": "5.9.3"

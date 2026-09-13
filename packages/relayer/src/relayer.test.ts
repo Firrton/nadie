@@ -53,7 +53,9 @@ class FakeChain implements ChainRelayerPort {
     if (this.simulationError) throw this.simulationError;
     this.preparedKinds.push(kind);
     this.preparedRequests.push(request);
-    return { request, gas: this.gas, maxCostWei: this.cost };
+    // feePerGas y maxCostWei coherentes: el servicio exige gas * feePerGas === maxCostWei.
+    const feePerGas = this.gas > 0n ? this.cost / this.gas + 1n : 1n;
+    return { request, gas: this.gas, feePerGas, maxCostWei: this.gas * feePerGas };
   }
   async submit(): Promise<`0x${string}`> {
     this.submits += 1;
@@ -229,7 +231,7 @@ describe("transaction relayer", () => {
     const extra = { ...body, extra: true };
     expect((await app.request("/v1/transactions/grants", { method: "POST", headers: { "content-type": "application/json", "idempotency-key": "valid_key_123456" }, body: JSON.stringify(extra) })).status).toBe(400);
     const oversized = "x".repeat(9000);
-    expect((await app.request("/v1/transactions/grants", { method: "POST", headers: { "content-type": "application/json", "idempotency-key": "valid_key_123456" }, body: oversized })).status).toBe(400);
+    expect((await app.request("/v1/transactions/grants", { method: "POST", headers: { "content-type": "application/json", "idempotency-key": "valid_key_123456" }, body: oversized })).status).toBe(413);
   });
 
   it("fails closed on wrong RPC chain", async () => {

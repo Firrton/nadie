@@ -146,7 +146,7 @@ export interface SignatureVerifier {
    * Verifica la firma EIP-191 del mensaje contra la address esperada.
    * La implementación productiva usa viem; los tests inyectan la suya.
    */
-  verifyPersonalMessage(message: string, signature: string, expectedAddress: string): boolean;
+  verifyPersonalMessage(message: string, signature: string, expectedAddress: string): boolean | Promise<boolean>;
 }
 
 // ---------------------------------------------------------------------------
@@ -331,7 +331,17 @@ export function createGatewayApp(deps: GatewayDeps): Hono {
     }
 
     // 3) Firma EIP-191 contra el professional del challenge. Sin RPC antes.
-    if (!verifier.verifyPersonalMessage(challengeMessage(config, rec), obj.signature, rec.professional)) {
+    let signatureValid = false;
+    try {
+      signatureValid = await verifier.verifyPersonalMessage(
+        challengeMessage(config, rec),
+        obj.signature,
+        rec.professional,
+      );
+    } catch {
+      signatureValid = false;
+    }
+    if (!signatureValid) {
       return notAuthorized(c);
     }
 
