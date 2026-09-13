@@ -4,6 +4,7 @@
   "references": [
     { "path": "packages/core" },
     { "path": "packages/gateway" },
-    { "path": "packages/relayer" }
+    { "path": "packages/relayer" },
+    { "path": "packages/e2e" }
   ]
 }

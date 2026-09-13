@@ -58,6 +58,34 @@ importers:
         specifier: ^3.2.7
         version: 3.2.7(@types/node@22.20.2)
 
+  packages/e2e:
+    dependencies:
+      '@hono/node-server':
+        specifier: 2.1.1
+        version: 2.1.1(hono@4.13.7)
+      '@nadie/core':
+        specifier: workspace:*
+        version: link:../core
+      '@nadie/gateway':
+        specifier: workspace:*
+        version: link:../gateway
+      '@nadie/relayer':
+        specifier: workspace:*
+        version: link:../relayer
+      viem:
+        specifier: 2.56.3
+        version: 2.56.3(typescript@5.9.3)(zod@4.6.2)
+    devDependencies:
+      '@types/node':
+        specifier: 22.20.2
+        version: 22.20.2
+      tsx:
+        specifier: 4.23.13
+        version: 4.23.13
+      vitest:
+        specifier: 3.2.7
+        version: 3.2.7(@types/node@22.20.2)
+
   packages/frontend:
     dependencies:
       '@mlc-ai/web-llm':

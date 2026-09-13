@@ -1,8 +1,11 @@
 import { beforeEach, describe, expect, it } from "vitest";
 import { generateEncryptionKeyPair, serializeEncryptedPackage, encryptPackage } from "@nadie/core";
+import { generatePrivateKey, privateKeyToAccount } from "viem/accounts";
 
 import { createGatewayApp, type GatewayConfig, type SignatureVerifier } from "./gateway";
+import { parseGatewayEnvironment } from "./config";
 import { FilePackageStore, sha256Hex } from "./file-store";
+import { createViemSignatureVerifier } from "./index";
 import type { BlockRef, ChainAuthorizationPort, ConsentSnapshot, PackageStore, StoredPackageRecord } from "./ports";
 
 // ---------------------------------------------------------------------------
@@ -108,6 +111,20 @@ function makeApp(overrides?: { store?: PackageStore; chain?: FakeChain; verifier
   const app = createGatewayApp({ store, chain, verifier, config, now });
   return { app, store, chain, verifier };
 }
+
+describe("gateway adapters and configuration", () => {
+  it("accepts ordinary unrelated operating-system environment variables", () => {
+    const env = parseGatewayEnvironment({
+      PATH: "/usr/local/bin:/usr/bin",
+      HOME: "/tmp/home",
+      HASHKEY_RPC_URL: "http://127.0.0.1:8545",
+      HASHKEY_CHAIN_ID: "133",
+      CONSENT_REGISTRY_ADDRESS: config.consentRegistryAddress,
+    });
+    expect(env.HASHKEY_CHAIN_ID).toBe(133);
+    expect(env.GATEWAY_PORT).toBe(8787);
+  });
+});
 
 function fetchHelper(app: ReturnType<typeof createGatewayApp>) {
   return (path: string, init?: RequestInit) => app.fetch(new Request(`http://localhost${path}`, init));
@@ -322,7 +339,7 @@ describe("POST /v1/access/challenges", () => {
 
 describe("POST /v1/packages/:consentId/access", () => {
   async function setupAccess(overrides?: { snapshot?: Partial<ConsentSnapshot> }) {
-    const { envelope, bytes, packageHash } = await makeEnvelope();
+    const { bytes, packageHash } = await makeEnvelope();
     const store = new MemoryStore();
     await store.put({
       packageHash,
@@ -349,7 +366,7 @@ describe("POST /v1/packages/:consentId/access", () => {
         body: JSON.stringify({ consentId: CONSENT_ID, professional: PROFESSIONAL }),
       })
     ).json()) as { challengeId: string };
-    return { app, f, store, chain, verifier, envelope, bytes, packageHash, challengeId: challenge.challengeId };
+    return { app, f, store, chain, verifier, bytes, packageHash, challengeId: challenge.challengeId };
   }
 
   const accessBody = (challengeId: string) =>
@@ -423,6 +440,54 @@ describe("POST /v1/packages/:consentId/access", () => {
     expect(res.status).toBe(404);
     expect(t.chain.latestCalls).toBe(0);
     expect(t.chain.snapshotCalls.length).toBe(0);
+  });
+
+  it("el adapter viem real rechaza la firma de otra wallet con 404", async () => {
+    const { bytes, packageHash } = await makeEnvelope();
+    const store = new MemoryStore();
+    await store.put({
+      packageHash,
+      bytes,
+      storedUntil: now() + 3600,
+      deletionTokenDigest: sha256Hex(new TextEncoder().encode("token")),
+    });
+    const expected = privateKeyToAccount(generatePrivateKey());
+    const attacker = privateKeyToAccount(generatePrivateKey());
+    const professional = expected.address.toLowerCase();
+    const chain = new FakeChain();
+    chain.snapshots.set(CONSENT_ID, {
+      exists: true,
+      professional,
+      packageHash,
+      firstOpenedAt: 12345,
+      valid: true,
+    });
+    const app = createGatewayApp({
+      store,
+      chain,
+      verifier: createViemSignatureVerifier(),
+      config,
+      now,
+    });
+    const f = fetchHelper(app);
+    const challenge = (await (
+      await f("/v1/access/challenges", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ consentId: CONSENT_ID, professional }),
+      })
+    ).json()) as { challengeId: string; message: string };
+    const signature = await attacker.signMessage({ message: challenge.message });
+
+    const response = await f(`/v1/packages/${CONSENT_ID}/access`, {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ challengeId: challenge.challengeId, signature }),
+    });
+
+    expect(response.status).toBe(404);
+    expect(await response.json()).toEqual({ error: "NOT_AUTHORIZED" });
+    expect(chain.latestCalls).toBe(0);
   });
 
   it("consentimiento inexistente/inválido/no abierto/profesional distinto: mismo 404", async () => {
