@@ -11,7 +11,7 @@
     "preview": "vite preview",
     "test": "pnpm --filter @nadie/core build && TZ=America/Mexico_City vitest run --exclude '**/e2e/**'",
     "test:watch": "pnpm --filter @nadie/core build && TZ=America/Mexico_City vitest --exclude '**/e2e/**'",
-    "test:e2e": "pnpm run build && vitest run test/e2e",
+    "test:e2e": "pnpm --filter @nadie/core build && vite build --mode e2e && vitest run test/e2e",
     "banco": "vite --port 5174 --strictPort --host 127.0.0.1",
     "banco:modelos": "node banco/servidor-local.mjs"
   },

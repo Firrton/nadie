@@ -4,6 +4,7 @@ import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { chromium } from 'playwright';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
+import { RESPUESTA_DE_PRUEBA } from './arranque-de-prueba.js';
 
 /* La prueba de runtime de la frase central del README:
 
@@ -24,7 +25,13 @@ import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 
      pnpm test:e2e
 
-   y si falta el navegador, falla fuerte diciendo qué comando correr. */
+   y si falta el navegador, falla fuerte diciendo qué comando correr.
+
+   QUÉ SE REEMPLAZA: el build es `vite build --mode e2e`, igual al de producción
+   salvo la raíz de composición de la inferencia, que pasa a ser
+   test/e2e/arranque-de-prueba.js (Chromium headless no tiene WebGPU). Este test
+   prueba la app entera; el runtime de WebLLM con el modelo real se verifica en
+   un navegador con GPU. */
 
 const AQUI = fileURLToPath(new URL('.', import.meta.url));
 const PAQUETE = join(AQUI, '..', '..');
@@ -47,14 +54,14 @@ async function esperarAlServidor(intentos = 60) {
 }
 
 beforeAll(async () => {
-  if (!existsSync(join(PAQUETE, 'dist'))) {
-    throw new Error('falta dist/. Corré `pnpm build` antes, o usá `pnpm test:e2e` que ya lo hace.');
+  if (!existsSync(join(PAQUETE, 'dist-e2e'))) {
+    throw new Error('falta dist-e2e/. Usá `pnpm test:e2e`, que compila con --mode e2e.');
   }
   /* --host 127.0.0.1 es a propósito: por defecto vite escucha en localhost, que
      en esta máquina resuelve a [::1], y el chequeo por IPv4 nunca conectaba. */
   servidor = spawn(
     join(PAQUETE, 'node_modules/.bin/vite'),
-    ['preview', '--port', String(PUERTO), '--strictPort', '--host', '127.0.0.1'],
+    ['preview', '--outDir', 'dist-e2e', '--port', String(PUERTO), '--strictPort', '--host', '127.0.0.1'],
     { cwd: PAQUETE, stdio: 'ignore' },
   );
   await esperarAlServidor();
@@ -91,19 +98,16 @@ describe('una sesión privada completa no hace ninguna petición hacia afuera', 
       await pagina.getByRole('button', { name: 'Sí, tengo 18 o más' }).click();
       await pagina.getByRole('button', { name: 'Entrar' }).click();
 
-      // home -> mantener presionado para abrir sesión (más de 250ms, si no se ignora)
-      const orbe = pagina.getByRole('button', { name: 'Mantén presionado para hablar' });
-      await orbe.hover();
-      await pagina.mouse.down();
-      await pagina.waitForTimeout(600);
-      await pagina.mouse.up();
+      // home -> un toque abre la sesión (no hay voz: se escribe)
+      await pagina.getByRole('button', { name: 'Empezar a escribir' }).click();
 
-      // conversación: el camino de texto, que es el que corre sin micrófono
+      // conversación por texto, y que el puerto conteste de verdad
       const campo = pagina.getByLabel('Escribe lo que quieras decir');
       await campo.waitFor({ state: 'visible' });
       await campo.fill('Probando una sesión entera sin red.');
       await pagina.getByRole('button', { name: 'Enviar' }).click();
       await expect.poll(() => pagina.getByText('Probando una sesión entera sin red.').count()).toBeGreaterThan(0);
+      await expect.poll(() => pagina.getByText(RESPUESTA_DE_PRUEBA).count(), { timeout: 15000 }).toBeGreaterThan(0);
 
       await pagina.getByRole('button', { name: 'Terminar' }).click();
 

@@ -11,6 +11,7 @@ node_modules/
 
 # TypeScript build output
 dist/
+dist-e2e/
 *.tsbuildinfo
 
 # Foundry output and cache
