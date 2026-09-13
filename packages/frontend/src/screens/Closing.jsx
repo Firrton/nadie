@@ -66,7 +66,7 @@ function NoteField({ value, onChange, maxLength }) {
 }
 
 export default function Closing({
-  exchange, weekValues, rated, onRate, onHome, onOpenJourney,
+  exchange, weekValues, rated, onRate, onHome, onOpenJourney, onShare = null,
   note = '', onNoteChange, noteMaxLength = 500, showTherapistNote = true,
   /* Puntaje del círculo que el modelo sugiere, o null. Se RESALTA, no se
      selecciona: hasta que la persona toca, no hay registro (§6). */
@@ -147,6 +147,10 @@ export default function Closing({
 
       <div style={{ flex: 'none', padding: 'var(--space-4) var(--screen-pad) var(--space-6)', display: 'flex', flexDirection: 'column', gap: 'var(--space-2)' }}>
         <button type="button" className="n-btn n-btn--primary n-btn--lg n-btn--full" onClick={onHome}>Volver al inicio</button>
+        {/* Solo existe si compartir está configurado (lib/compartir/red.js). */}
+        {onShare ? (
+          <button type="button" className="n-btn n-btn--secondary n-btn--md n-btn--full" onClick={onShare}>Compartir con tu psicóloga</button>
+        ) : null}
         <button type="button" className="n-btn n-btn--ghost n-btn--md n-btn--full" onClick={onOpenJourney}>Ver tu camino</button>
       </div>
     </div>

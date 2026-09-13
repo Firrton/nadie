@@ -3,13 +3,28 @@ import { join, relative } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { describe, expect, it } from 'vitest';
 import { ESCALERA, HOSTS_DE_MODELO } from '../src/lib/llm/modelos.js';
+import { loadEnv } from 'vite';
 import { hostsDeCompartir } from '../src/lib/compartir/red.js';
+
+const AQUI_ENV = fileURLToPath(new URL('..', import.meta.url));
+
+/* EL ENTORNO DEL BUILD, NO EL DEL TEST. Vite NO carga .env.local en modo test,
+   pero el build sí, e inlinea esos VITE_* en el bundle. Si el test mirara su
+   propio import.meta.env, no conocería los hosts que el build sí metió. */
+const ENV_DEL_BUILD = loadEnv('production', AQUI_ENV, 'VITE_');
 
 /* COMPARTIR ES LA SEGUNDA EXCEPCIÓN, y solo para el BUNDLE: sus orígenes llegan
    por VITE_* y Vite los inlinea al compilar. En el código fuente siguen sin
    aparecer (el test de fuente no la usa). Pasa solo cuando la persona aprueba
-   y toca enviar; la conversación nunca sale. Ver src/lib/compartir/red.js. */
-const HOSTS_DE_COMPARTIR = hostsDeCompartir();
+   y toca enviar; la conversación nunca sale. Ver src/lib/compartir/red.js.
+
+   VITE_MODELOS_BASE es el mismo caso que los pesos de huggingface, pero
+   servidos desde donde el entorno diga (en el demo, el disco local). */
+const HOSTS_DE_COMPARTIR = hostsDeCompartir(ENV_DEL_BUILD);
+const HOSTS_DEL_ENTORNO = [
+  ...HOSTS_DE_COMPARTIR,
+  ...(ENV_DEL_BUILD.VITE_MODELOS_BASE ? [ENV_DEL_BUILD.VITE_MODELOS_BASE] : []),
+];
 
 /* El README promete, textualmente:
 
@@ -83,6 +98,26 @@ const VENDOR_EN_BUNDLE = [
      https://webgpureport.org/"). Verificado leyendo el bundle: aparece solo
      adentro de ese mensaje, nunca como destino. Misma categoría que la de React. */
   'https://webgpureport.org/',
+  /* viem (entra con compartir). Verificado leyendo el bundle, una por una:
+     - viem.sh, oxlib.sh, abitype.dev, 4byte.sourcify.dev y la cheatsheet de
+       Solidity viven dentro del texto de sus errores ("Docs: ...", "You can look
+       up the decoded signature here: ..."). Misma categoría que React.
+     - `http://[${` es el new URL(`http://[${host}]`) con que viem valida una
+       IPv6: una plantilla, no un destino. Se permite con el `${` incluido a
+       propósito: el prefijo `http://[` solo dejaría pasar un pedido REAL a
+       cualquier IPv6 (`http://[2001:db8::1]`).
+     - ipfs.io y arweave.net son los gateways POR DEFECTO para resolver avatares
+       de ENS. Esos SÍ se pedirían si alguien llamara a getEnsAvatar; nuestro
+       código no lo hace en ningún camino. Si algún día se usa ENS, esto deja de
+       ser inerte y hay que sacarlo de acá. */
+  'https://viem.sh',
+  'https://oxlib.sh',
+  'https://abitype.dev',
+  'https://4byte.sourcify.dev/',
+  'https://docs.soliditylang.org/en/latest/cheatsheet.html',
+  'http://[${',
+  'https://ipfs.io',
+  'https://arweave.net',
 ];
 
 /* Los comentarios se sacan ANTES de buscar. Si no, este mismo archivo — que
@@ -158,7 +193,7 @@ describe('la app no habla con terceros', () => {
       console.warn('[no-external-requests] sin dist/: corré `pnpm build` para cubrir también el bundle');
       return;
     }
-    const permitidas = [...VENDOR_EN_BUNDLE, ...HOSTS_DE_MODELO, ...HOSTS_DE_COMPARTIR];
+    const permitidas = [...VENDOR_EN_BUNDLE, ...HOSTS_DE_MODELO, ...HOSTS_DEL_ENTORNO];
     expect(violaciones(archivosDe(dist, ['.js', '.css', '.html']), permitidas)).toEqual([]);
   });
 
@@ -181,11 +216,11 @@ describe('la app no habla con terceros', () => {
     expect(entradas.length).toBeGreaterThan(0);
 
     // Ningún origen que no sea uno de los nuestros.
-    expect(violaciones(entradas, [...VENDOR_EN_BUNDLE, ...HOSTS_DE_MODELO, ...HOSTS_DE_COMPARTIR])).toEqual([]);
+    expect(violaciones(entradas, [...VENDOR_EN_BUNDLE, ...HOSTS_DE_MODELO, ...HOSTS_DEL_ENTORNO])).toEqual([]);
 
     // Y solo los que declaramos: un catálogo ajeno se delata por el volumen.
     const distintas = new Set(
-      entradas.flatMap((ruta) => urlsExternas(readFileSync(ruta, 'utf8'), [...VENDOR_EN_BUNDLE, ...HOSTS_DE_COMPARTIR])),
+      entradas.flatMap((ruta) => urlsExternas(readFileSync(ruta, 'utf8'), [...VENDOR_EN_BUNDLE, ...HOSTS_DEL_ENTORNO])),
     );
     expect(distintas.size).toBeLessThanOrEqual(2 * ESCALERA.length);
   });

@@ -6,6 +6,9 @@ import { dateKey, entriesFromSeries, lastNDays, upsertEntry } from '../lib/moodL
 import { crearDemoLLM } from '../lib/llm/demo.js';
 import { QUIEN_NADIE, QUIEN_USUARIO, turnosAMensajes } from '../lib/llm/messages.js';
 import { entradaDeCheckIn, proponerCheckIn } from '../lib/llm/checkin.js';
+import { prepararBorrador } from '../lib/compartir/flujo.js';
+import { enviarAPsicologa } from '../lib/compartir/enviar.js';
+import { unaALaVez } from '../lib/compartir/unaALaVez.js';
 
 /* Estado único de la app.
 
@@ -24,7 +27,7 @@ import { entradaDeCheckIn, proponerCheckIn } from '../lib/llm/checkin.js';
 const VENTANA_DIAS = 28;
 const NOTA_MAX = 500;
 
-export function useNadie({ initialScreen = 'onboarding', seedDemo = false, llm } = {}) {
+export function useNadie({ initialScreen = 'onboarding', seedDemo = false, llm, compartir = null } = {}) {
   /* El puerto de inferencia se inyecta. Por defecto es el guion de demo; el día
      que entre WebLLM se pasa otro objeto con la misma forma y no se toca nada
      más acá. useRef para que no se recree en cada render. */
@@ -47,6 +50,13 @@ export function useNadie({ initialScreen = 'onboarding', seedDemo = false, llm }
   /* Check-in propuesto por el modelo al cerrar. Vive en memoria y muere con la
      pantalla: NO se guarda hasta que la persona toca un círculo (§6). */
   const [propuesta, setPropuesta] = useState(null);
+
+  /* Compartir vive en memoria, igual que la conversación. El documento aprobado
+     no se guarda en ningún lado: si la persona se va sin enviar, se pierde. */
+  const [compartirEstado, setCompartirEstado] = useState('inactivo'); // inactivo | preparando | borrador | enviando | listo | error
+  const [compartirDocumento, setCompartirDocumento] = useState('');
+  const [compartirPaso, setCompartirPaso] = useState(null);
+  const [compartirResultado, setCompartirResultado] = useState(null);
 
   /* El registro: mapa por fecha, leído del dispositivo una sola vez. */
   const [entries, setEntries] = useState(() => {
@@ -261,6 +271,51 @@ export function useNadie({ initialScreen = 'onboarding', seedDemo = false, llm }
     setPropuesta(null);
   }, []);
 
+  /* Las dos acciones se crean UNA vez y leen el documento por ref. Si se
+     recrearan en cada render (useCallback con el documento como dependencia),
+     cada instancia tendría su propio guard y el candado de unaALaVez no serviría. */
+  const compartirDocumentoRef = useRef(compartirDocumento);
+  compartirDocumentoRef.current = compartirDocumento;
+
+  const prepararCompartir = useMemo(() => unaALaVez(() => {
+    setScreen('compartir');
+    setCompartirEstado('preparando');
+    setCompartirDocumento('');
+    setCompartirResultado(null);
+    return prepararBorrador({ puerto: puerto.current, turnos: turnsRef.current, entradas: entriesRef.current }).then(
+      ({ documento }) => {
+        setCompartirDocumento(documento);
+        setCompartirEstado('borrador');
+      },
+      () => setCompartirEstado('error'),
+    );
+  }), []);
+
+  const enviarCompartir = useMemo(() => unaALaVez(() => {
+    const documento = compartirDocumentoRef.current;
+    if (!compartir || !documento) return undefined;
+    setCompartirEstado('enviando');
+    setCompartirPaso(null);
+    return enviarAPsicologa({
+      documento,
+      config: compartir.config,
+      cadena: compartir.cadena,
+      cuenta: compartir.cuenta(),
+      alProgresar: setCompartirPaso,
+    }).then(
+      (r) => {
+        setCompartirResultado(r);
+        setCompartirEstado('listo');
+      },
+      (e) => {
+        /* Solo el código del error, nunca contenido: los mensajes de enviar.js
+           son del tipo "gateway-rechazo-409". */
+        if (typeof console !== 'undefined') console.warn('[nadie] compartir falló: ' + (e && e.message));
+        setCompartirEstado('error');
+      },
+    );
+  }), [compartir]);
+
   const monthValues = useMemo(() => lastNDays(entries, VENTANA_DIAS), [entries]);
   const weekValues = useMemo(() => monthValues.slice(-7), [monthValues]);
   const todayEntry = entries[dateKey()];
@@ -304,5 +359,17 @@ export function useNadie({ initialScreen = 'onboarding', seedDemo = false, llm }
       rateToday, setTodayNote, clearHistory,
       noteMaxLength: NOTA_MAX,
     },
+    /* null si el entorno no configuró compartir: la UI no ofrece el botón. */
+    compartir: compartir
+      ? {
+        estado: compartirEstado,
+        documento: compartirDocumento,
+        paso: compartirPaso,
+        resultado: compartirResultado,
+        explorerUrl: compartir.config.explorerUrl,
+        preparar: prepararCompartir,
+        enviar: enviarCompartir,
+      }
+      : null,
   };
 }

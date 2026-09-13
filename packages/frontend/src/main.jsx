@@ -5,6 +5,9 @@ import { arrancarIA, iaLocalActivada } from './lib/llm/arranque.js';
 import { crearSeguimientoDeCarga } from './lib/llm/carga.js';
 import { asegurarPersistencia } from './lib/persistencia.js';
 import { caminoDeDemoActivado } from './lib/caminoDeDemo.js';
+import { configDeCompartir } from './lib/compartir/red.js';
+import { crearCadena } from './lib/compartir/cadena.js';
+import { cargarOCrearCuenta } from './lib/compartir/cuenta.js';
 import './styles/styles.css';
 import './styles/theme.css';
 
@@ -29,8 +32,16 @@ let carga = null;
 let puertoActual = null;
 const seedDemo = caminoDeDemoActivado();
 
+/* Compartir se arma acá, y solo si el entorno lo configuró entero. Sin config,
+   `compartir` es null y la app ni siquiera ofrece el botón. La cuenta se carga
+   recién al enviar: abrir la app no crea llaves. */
+const configCompartir = configDeCompartir();
+const compartir = configCompartir
+  ? { config: configCompartir, cadena: crearCadena({ config: configCompartir }), cuenta: () => cargarOCrearCuenta() }
+  : null;
+
 function dibujar() {
-  raiz.render(<App llm={puertoActual} carga={carga} seedDemo={seedDemo} />);
+  raiz.render(<App llm={puertoActual} carga={carga} seedDemo={seedDemo} compartir={compartir} />);
 }
 
 arrancarIA({

@@ -156,6 +156,16 @@ describe('armarMensajesDeExtraccion', () => {
   it('lanza ante un esquema que no conoce', () => {
     expect(() => armarMensajesDeExtraccion([], 'inventado', [])).toThrow(/no hay instrucciones/);
   });
+
+  /* Medido en el navegador con el 1.5B: como "body" devolvió la frase de la
+     persona, palabra por palabra. Lo que se comparte es un RESUMEN; las palabras
+     textuales son lo más íntimo de la conversación y no viajan por accidente. */
+  it('el resumen para compartir se pide en tercera persona y sin copiar frases textuales', () => {
+    const [, pedido] = armarMensajesDeExtraccion([], 'share-summary', []);
+
+    expect(pedido.content).toContain('tercera persona');
+    expect(pedido.content).toContain('No copies frases textuales');
+  });
 });
 
 describe('el motor se inyecta', () => {

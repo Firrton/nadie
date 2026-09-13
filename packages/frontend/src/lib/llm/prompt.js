@@ -130,6 +130,8 @@ const INSTRUCCIONES_EXTRACCION = {
     'Responde SOLO con un objeto JSON con esta forma:',
     '{"title": texto, "body": texto, "moodTrendIncluded": true o false, "dateRange": {"from": "YYYY-MM-DD", "to": "YYYY-MM-DD"}}',
     'Describe lo que la persona contó. No interpretes, no concluyas y no sugieras un tratamiento.',
+    /* Medido: sin esto, el 1.5B copió la frase de la persona como "body". */
+    'Escribe el body en tercera persona y con tus palabras, en dos o tres frases. No copies frases textuales de la persona.',
   ],
 };
 
