@@ -2,8 +2,10 @@
  * Arranque del gateway: valida configuración estricta (fail-fast), verifica
  * que el RPC reporte chain ID 133, barre expirados y escucha.
  *
- * Sin request logger ni console.*: errores de arranque terminan el proceso
- * con exit code distinto de cero.
+ * Sin request logger. Un error de arranque escribe UNA línea en stderr y
+ * termina con exit code distinto de cero: sin esa línea, un deploy que falla
+ * no dice por qué. De la configuración se nombran las variables inválidas,
+ * nunca sus valores.
  */
 
 import { serve } from "@hono/node-server";
@@ -19,7 +21,8 @@ async function main(): Promise<void> {
   let env;
   try {
     env = parseGatewayEnvironment(process.env);
-  } catch {
+  } catch (error) {
+    console.error("gateway: invalid configuration: " + invalidKeys(error));
     process.exitCode = 1;
     return;
   }
@@ -28,6 +31,7 @@ async function main(): Promise<void> {
   const client = createPublicClient({ transport: http(env.HASHKEY_RPC_URL) });
   const chainId = await client.getChainId();
   if (chainId !== 133) {
+    console.error("gateway: RPC reports chain ID " + chainId + ", expected 133");
     process.exitCode = 1;
     return;
   }
@@ -61,4 +65,14 @@ async function main(): Promise<void> {
   serve({ fetch: app.fetch, port: env.GATEWAY_PORT });
 }
 
-void main();
+/** Nombres de las variables que no pasaron la validación; nunca sus valores. */
+function invalidKeys(error: unknown): string {
+  const issues = (error as { issues?: Array<{ path?: PropertyKey[] }> })?.issues;
+  if (!Array.isArray(issues)) return "unknown";
+  return [...new Set(issues.map((issue) => String(issue.path?.[0] ?? "?")))].join(", ");
+}
+
+void main().catch((error: unknown) => {
+  console.error("gateway: startup failed: " + (error instanceof Error ? error.name : "unknown error"));
+  process.exitCode = 1;
+});

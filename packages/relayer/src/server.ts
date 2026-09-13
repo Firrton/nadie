@@ -45,6 +45,21 @@ async function main(): Promise<void> {
   serve({ fetch: app.fetch, port: env.RELAYER_PORT });
 }
 
-void main().catch(() => {
+/**
+ * Un error de arranque escribe UNA línea en stderr: sin ella, un deploy que
+ * falla no dice por qué. De la configuración se nombran las variables
+ * inválidas, NUNCA sus valores: RELAYER_PRIVATE_KEY pasa por acá.
+ */
+function describeStartupError(error: unknown): string {
+  const issues = (error as { issues?: Array<{ path?: PropertyKey[] }> })?.issues;
+  if (Array.isArray(issues)) {
+    const keys = [...new Set(issues.map((issue) => String(issue.path?.[0] ?? "?")))];
+    return "invalid configuration: " + keys.join(", ");
+  }
+  return error instanceof Error ? error.name + ": " + error.message : "unknown error";
+}
+
+void main().catch((error: unknown) => {
+  console.error("relayer: " + describeStartupError(error));
   process.exitCode = 1;
 });
