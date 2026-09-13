@@ -1,5 +1,5 @@
 # Nadie
-
+![Nadie](docs/imagenes/nadie-imagen.png)
 **Private AI for the things you can't say out loud yet.**
 
 *Nadie* is Spanish for *nobody*. Who reads what you tell your AI? Nobody.
@@ -156,6 +156,7 @@ No code, components, design tokens, or application assets are inherited from ano
 
 Nadie is a companion, not a clinician. It never diagnoses and never shares anything automatically. A local risk detector runs in every mode; when it triggers, the app surfaces human help immediately. The MVP is for adults only and all demo data is synthetic.
 
+![Nadie](docs/imagenes/nadie-imagen-2.png)
 ## License
 
 MIT. See [LICENSE](LICENSE).
