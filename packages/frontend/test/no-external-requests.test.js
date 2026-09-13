@@ -3,6 +3,13 @@ import { join, relative } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { describe, expect, it } from 'vitest';
 import { ESCALERA, HOSTS_DE_MODELO } from '../src/lib/llm/modelos.js';
+import { hostsDeCompartir } from '../src/lib/compartir/red.js';
+
+/* COMPARTIR ES LA SEGUNDA EXCEPCIÓN, y solo para el BUNDLE: sus orígenes llegan
+   por VITE_* y Vite los inlinea al compilar. En el código fuente siguen sin
+   aparecer (el test de fuente no la usa). Pasa solo cuando la persona aprueba
+   y toca enviar; la conversación nunca sale. Ver src/lib/compartir/red.js. */
+const HOSTS_DE_COMPARTIR = hostsDeCompartir();
 
 /* El README promete, textualmente:
 
@@ -151,7 +158,7 @@ describe('la app no habla con terceros', () => {
       console.warn('[no-external-requests] sin dist/: corré `pnpm build` para cubrir también el bundle');
       return;
     }
-    const permitidas = [...VENDOR_EN_BUNDLE, ...HOSTS_DE_MODELO];
+    const permitidas = [...VENDOR_EN_BUNDLE, ...HOSTS_DE_MODELO, ...HOSTS_DE_COMPARTIR];
     expect(violaciones(archivosDe(dist, ['.js', '.css', '.html']), permitidas)).toEqual([]);
   });
 
@@ -174,11 +181,11 @@ describe('la app no habla con terceros', () => {
     expect(entradas.length).toBeGreaterThan(0);
 
     // Ningún origen que no sea uno de los nuestros.
-    expect(violaciones(entradas, [...VENDOR_EN_BUNDLE, ...HOSTS_DE_MODELO])).toEqual([]);
+    expect(violaciones(entradas, [...VENDOR_EN_BUNDLE, ...HOSTS_DE_MODELO, ...HOSTS_DE_COMPARTIR])).toEqual([]);
 
     // Y solo los que declaramos: un catálogo ajeno se delata por el volumen.
     const distintas = new Set(
-      entradas.flatMap((ruta) => urlsExternas(readFileSync(ruta, 'utf8'), VENDOR_EN_BUNDLE)),
+      entradas.flatMap((ruta) => urlsExternas(readFileSync(ruta, 'utf8'), [...VENDOR_EN_BUNDLE, ...HOSTS_DE_COMPARTIR])),
     );
     expect(distintas.size).toBeLessThanOrEqual(2 * ESCALERA.length);
   });
