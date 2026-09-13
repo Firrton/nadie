@@ -10,7 +10,7 @@ An emotional companion that runs a language model inside your browser, keeps you
 
 | | |
 |---|---|
-| Demo video | `TODO_SUNDAY_VIDEO_URL` |
+| Demo video | https://youtu.be/dDtCaLzSrQw |
 | Live app (person) | https://nadie-app.onrender.com — desktop Chromium with WebGPU recommended |
 | Live portal (psychologist) | https://nadie-portal.onrender.com |
 | Technical documentation | [docs/TECHNICAL.md](docs/TECHNICAL.md) — track, architecture, features, roadmap |
