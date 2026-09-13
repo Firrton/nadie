@@ -84,7 +84,7 @@ const config: GatewayConfig = {
   chainId: 133,
   consentRegistryAddress: "0x" + "cd".repeat(20),
   gatewayUrl: "http://localhost:8787",
-  allowedOrigin: "http://localhost:5173",
+  allowedOrigins: ["http://localhost:5173", "https://psicologo.example"],
   maxPackageBytes: 1_048_576,
   retentionSeconds: 604_800,
   challengeTtlSeconds: 60,
@@ -123,6 +123,19 @@ describe("gateway adapters and configuration", () => {
     });
     expect(env.HASHKEY_CHAIN_ID).toBe(133);
     expect(env.GATEWAY_PORT).toBe(8787);
+  });
+
+  it("parses a comma-separated allowlist of exact browser origins", () => {
+    const env = parseGatewayEnvironment({
+      HASHKEY_RPC_URL: "http://127.0.0.1:8545",
+      HASHKEY_CHAIN_ID: "133",
+      CONSENT_REGISTRY_ADDRESS: config.consentRegistryAddress,
+      GATEWAY_ALLOWED_ORIGIN: "https://persona.example, https://psicologo.example/",
+    });
+    expect(env.GATEWAY_ALLOWED_ORIGIN).toEqual([
+      "https://persona.example",
+      "https://psicologo.example",
+    ]);
   });
 });
 
@@ -697,6 +710,8 @@ describe("health, retención y CORS", () => {
     const f = fetchHelper(app);
     const ok = await f("/healthz", { headers: { origin: "http://localhost:5173" } });
     expect(ok.headers.get("access-control-allow-origin")).toBe("http://localhost:5173");
+    const psychologist = await f("/healthz", { headers: { origin: "https://psicologo.example" } });
+    expect(psychologist.headers.get("access-control-allow-origin")).toBe("https://psicologo.example");
     const bad = await f("/healthz", { headers: { origin: "https://evil.example" } });
     expect(bad.headers.get("access-control-allow-origin")).toBeNull();
   });

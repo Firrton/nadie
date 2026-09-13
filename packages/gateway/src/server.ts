@@ -36,7 +36,7 @@ async function main(): Promise<void> {
     chainId: env.HASHKEY_CHAIN_ID,
     consentRegistryAddress: env.CONSENT_REGISTRY_ADDRESS.toLowerCase(),
     gatewayUrl: env.GATEWAY_URL,
-    allowedOrigin: env.GATEWAY_ALLOWED_ORIGIN,
+    allowedOrigins: env.GATEWAY_ALLOWED_ORIGIN,
     maxPackageBytes: env.GATEWAY_MAX_PACKAGE_BYTES,
     retentionSeconds: env.GATEWAY_RETENTION_SECONDS,
     challengeTtlSeconds: env.GATEWAY_CHALLENGE_TTL_SECONDS,

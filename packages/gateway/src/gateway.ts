@@ -26,7 +26,7 @@ export interface GatewayConfig {
   chainId: number;
   consentRegistryAddress: string;
   gatewayUrl: string;
-  allowedOrigin: string;
+  allowedOrigins: readonly string[];
   maxPackageBytes: number;
   retentionSeconds: number;
   challengeTtlSeconds: number;
@@ -172,7 +172,7 @@ export function createGatewayApp(deps: GatewayDeps): Hono {
   app.use(
     "*",
     cors({
-      origin: (origin) => (origin === config.allowedOrigin ? config.allowedOrigin : undefined),
+      origin: (origin) => (config.allowedOrigins.includes(origin) ? origin : undefined),
       allowMethods: ["GET", "PUT", "POST", "DELETE"],
       allowHeaders: ["Content-Type", "Authorization"],
       credentials: false,
