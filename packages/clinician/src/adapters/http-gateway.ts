@@ -30,7 +30,11 @@ export class HttpGatewayAdapter implements GatewayPort {
 
   constructor(baseUrl: string, fetchImplementation: typeof fetch = fetch) {
     this.#baseUrl = baseUrl.replace(/\/$/, "");
-    this.#fetch = fetchImplementation;
+    /* Envuelto, no guardado tal cual: `this.#fetch(...)` llamaría a fetch con
+       `this` = el adaptador, y Chrome lanza "Illegal invocation" antes de mandar
+       el pedido. En Node no falla, por eso pasó los tests; en el demo, la
+       psicóloga pagó el open y vio "No pudimos conectar con el servicio". */
+    this.#fetch = (input, init) => fetchImplementation(input, init);
   }
 
   async requestChallenge(consentId: Hex, professional: Address): Promise<AccessChallenge> {
