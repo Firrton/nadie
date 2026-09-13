@@ -366,10 +366,10 @@ describe("transaction relayer", () => {
 
   it("fails startup for absent bytecode, wrong chain, and low balance", async () => {
     const code = new FakeChain(); code.code = "0x";
-    await expect(validateRelayerStartup(code, 10n)).rejects.toThrow();
+    await expect(validateRelayerStartup(code, 10n)).rejects.toThrow(/contract bytecode missing/);
     const chain = new FakeChain(); chain.chainId = 1;
-    await expect(validateRelayerStartup(chain, 10n)).rejects.toThrow();
+    await expect(validateRelayerStartup(chain, 10n)).rejects.toThrow(/chain ID 1, expected 133/);
     const balance = new FakeChain(); balance.balance = 9n;
-    await expect(validateRelayerStartup(balance, 10n)).rejects.toThrow();
+    await expect(validateRelayerStartup(balance, 10n)).rejects.toThrow(/balance 9 wei below minimum 10 wei/);
   });
 });

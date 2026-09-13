@@ -17,7 +17,13 @@ async function main(): Promise<void> {
   });
 
   // Fail before listening if network, deployment, or operational balance is wrong.
-  await validateRelayerStartup(chain, env.RELAYER_MIN_BALANCE_WEI);
+  // The account ADDRESS is public and tells which key was loaded; the key itself never leaves config.
+  try {
+    await validateRelayerStartup(chain, env.RELAYER_MIN_BALANCE_WEI);
+  } catch (error) {
+    const reason = error instanceof Error ? error.message : "relayer startup validation failed";
+    throw new Error(`${reason} (relayer account ${chain.accountAddress})`);
+  }
 
   const idempotency = new MemoryIdempotencyStore(env.RELAYER_MAX_IDEMPOTENCY_ENTRIES);
   const service = new RelayService({
