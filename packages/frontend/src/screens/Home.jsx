@@ -33,7 +33,7 @@ export default function Home({ weekValues, hasToday, onStart, onOpenJourney, car
       </div>
 
       <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 'var(--space-6) 0', minHeight: 300 }}>
-        {esperando ? <EsperaDelModelo carga={carga} /> : <TalkButton size={218} onHoldEnd={onStart} />}
+        {esperando ? <EsperaDelModelo carga={carga} /> : <TalkButton size={218} onClick={onStart} />}
       </div>
 
       <div style={{ paddingBottom: 'var(--space-4)' }}>

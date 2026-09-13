@@ -1,4 +1,3 @@
-import { crearDemoLLM } from './demo.js';
 import { crearEngineWebLLM } from './engine.js';
 import { escaleraQueEntra } from './modelos.js';
 import { medirCapacidad } from './webgpu.js';
@@ -8,33 +7,24 @@ import { crearWebLLM } from './webllm.js';
    la app. Las pantallas hablan con useNadie, useNadie habla con un LLMPort, y
    cuál es ese puerto se resuelve acá y en ningún otro lado.
 
-   Devuelve SIEMPRE un puerto usable. Si no hay WebGPU, si el equipo no da, o si
-   la IA local está apagada, devuelve el guion de demo en vez de un error: una
-   app que no abre es peor que una app que todavía no piensa.
+   EL MODELO REAL ES EL ÚNICO CAMINO. No hay guion de respaldo: fingir que la
+   app piensa cuando no hay modelo sería mentir justo donde la persona se abre.
+   Si el equipo no da, se devuelve `puerto: null` y la app muestra la pantalla
+   de "sin soporte" — el registro de ánimo sigue entero.
 
-   ESTÁ DETRÁS DE UN FLAG, y es la regla del propio proyecto: REGLAS §5 dice
-   "todo lo opcional detrás de un flag" y que el demo principal corra con los
-   opcionales apagados. Mientras no exista el copy de la pantalla de carga —qué
-   dice la app mientras bajan 873 MB, y qué dice si el equipo no puede— encender
-   esto por defecto sería empeorar la experiencia, no mejorarla.
-
-   Las dependencias se inyectan para poder probar las tres ramas sin GPU. */
+   Las dependencias se inyectan para poder probar las ramas sin GPU. */
 export async function arrancarIA({
-  activado = false,
   medir = medirCapacidad,
   crearEngine = crearEngineWebLLM,
-  crearDemo = crearDemoLLM,
   onProgreso,
 } = {}) {
-  if (!activado) return { puerto: crearDemo(), modo: 'demo', adaptador: null };
-
   const capacidad = await medir();
   const posibles = escaleraQueEntra(capacidad);
 
   /* Vacío NO es un error del chequeo: es la respuesta correcta cuando el equipo
      no da. ARQUITECTURA §4.3 dice ofrecer el nivel 2 (enclave) en ese caso. */
   if (posibles.length === 0) {
-    return { puerto: crearDemo(), modo: 'sin-soporte', capacidad, adaptador: null };
+    return { puerto: null, modo: 'sin-soporte', capacidad, adaptador: null };
   }
 
   const adaptador = crearPuertoConRespaldo({ escalera: posibles, crearEngine, onProgreso });
@@ -101,14 +91,4 @@ export function crearPuertoConRespaldo({ escalera, crearEngine, onProgreso }) {
     get modelo() { return modelo; },
     get descartados() { return descartados.slice(); },
   };
-}
-
-/* Lee el flag. La URL manda sobre el build para poder probar el camino real en
-   un despliegue sin recompilar: ?ia=local lo enciende, ?ia=demo lo apaga. */
-export function iaLocalActivada(busqueda = typeof location !== 'undefined' ? location.search : '') {
-  const params = new URLSearchParams(busqueda || '');
-  const pedido = params.get('ia');
-  if (pedido === 'local') return true;
-  if (pedido === 'demo') return false;
-  return Boolean(import.meta.env && import.meta.env.VITE_IA_LOCAL === 'true');
 }

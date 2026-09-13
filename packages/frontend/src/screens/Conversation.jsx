@@ -1,17 +1,15 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { TalkButton } from '../components/TalkButton.jsx';
+import { VoiceOrb } from '../components/VoiceOrb.jsx';
 import { Icon } from '../components/Icon.jsx';
 import { Lock, Pause, Play, Stop } from '../components/Glyphs.jsx';
 
-/* Conversación activa. El orbe lleva el estado (idle / listening / processing /
-   speaking); la transcripción es secundaria y va en tipografía distinta según
-   quién habla: sans para el usuario, serif para nadie.
+/* Conversación activa. El orbe lleva el estado (idle / processing / speaking);
+   la transcripción es secundaria y va en tipografía distinta según quién habla:
+   sans para el usuario, serif para nadie.
 
-   Hay DOS formas de decir algo: mantener presionado el orbe, o escribir. El
-   texto no es un accesorio — es el camino que funciona sin micrófono y sin
-   permisos, y el único que queda si la voz no llega. El orbe sigue siendo el
-   protagonista; el campo va debajo, callado. */
-
+   SE ESCRIBE. No hay voz real todavía, y el reconocimiento del navegador manda
+   el audio afuera: el texto es el único camino que cumple la promesa. El orbe
+   sigue siendo el protagonista; el campo va debajo, callado. */
 export default function Conversation({ session }) {
   const scroller = useRef(null);
   const campo = useRef(null);
@@ -32,13 +30,17 @@ export default function Conversation({ session }) {
     if (el) el.scrollTop = el.scrollHeight;
   }, [session.turns, session.live]);
 
+  /* Escribir es la única forma de decir algo: el campo se enfoca solo al abrir,
+     sin tener que buscarlo. */
+  useEffect(() => {
+    if (campo.current) campo.current.focus();
+  }, []);
+
   const hint = session.paused
     ? 'En pausa'
     : session.raw === 'processing'
       ? 'Un momento…'
-      : session.raw === 'speaking'
-        ? ''
-        : 'Mantén presionado para hablar';
+      : '';
 
   const speaking = session.raw === 'speaking';
   const empty = session.turns.length === 0 && !session.live;
@@ -76,14 +78,11 @@ export default function Conversation({ session }) {
       </div>
 
       <div style={{ flex: 'none', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 'var(--space-4)', padding: 'var(--space-3) var(--screen-pad) var(--space-6)' }}>
-        <TalkButton
-          size={148}
-          state={session.state}
-          hint={hint}
-          hintActive="Te escucho."
-          onHoldStart={session.hold}
-          onHoldEnd={session.release}
-        />
+        {/* El orbe no es un botón: solo muestra el estado. */}
+        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 'var(--space-5)' }}>
+          <VoiceOrb size={148} state={session.state} />
+          <span className="t-small" style={{ minHeight: '1.4em' }}>{hint}</span>
+        </div>
         <form onSubmit={enviar} style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-2)', width: '100%' }}>
           <input
             ref={campo}
@@ -92,7 +91,7 @@ export default function Conversation({ session }) {
             value={borrador}
             onChange={(e) => setBorrador(e.target.value)}
             disabled={!session.canSend}
-            placeholder="O escríbelo"
+            placeholder="Escribe lo que quieras decir"
             aria-label="Escribe lo que quieras decir"
             enterKeyHint="send"
             autoComplete="off"

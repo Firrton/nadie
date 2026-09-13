@@ -1,9 +1,8 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { DEMO_MONTH, DEMO_USER_LINES, VOICES } from '../data/content.js';
+import { DEMO_MONTH, VOICES } from '../data/content.js';
 import { clearMoodLog, loadMoodLog, saveMoodLog } from '../lib/storage.js';
 import { asegurarPersistencia } from '../lib/persistencia.js';
 import { dateKey, entriesFromSeries, lastNDays, upsertEntry } from '../lib/moodLog.js';
-import { crearDemoLLM } from '../lib/llm/demo.js';
 import { QUIEN_NADIE, QUIEN_USUARIO, turnosAMensajes } from '../lib/llm/messages.js';
 import { entradaDeCheckIn, proponerCheckIn } from '../lib/llm/checkin.js';
 import { prepararBorrador } from '../lib/compartir/flujo.js';
@@ -16,9 +15,9 @@ import { unaALaVez } from '../lib/compartir/unaALaVez.js';
    transcripciones no se guardan. Lo único que persiste es el REGISTRO DE ÁNIMO
    (número + fecha + nota opcional), en el dispositivo, vía lib/storage.js.
 
-   En producción, sustituir el guion de demo por:
-     - reconocimiento de voz en el dispositivo  -> pushUserTurn(texto)
-     - respuesta del modelo                     -> pushNadieTurn(texto)
+   La inferencia la pone el puerto que inyecta main.jsx: el modelo real, y solo
+   el modelo real. Si no hay puerto no hay conversación — la app muestra la
+   pantalla de sin soporte en vez de inventar respuestas.
 
    `seedDemo` siembra el mes de ejemplo de content.js para poder revisar "Tu
    camino" con datos. Es opt-in explícito y ESCRIBE en el almacenamiento del
@@ -28,11 +27,11 @@ const VENTANA_DIAS = 28;
 const NOTA_MAX = 500;
 
 export function useNadie({ initialScreen = 'onboarding', seedDemo = false, llm, compartir = null } = {}) {
-  /* El puerto de inferencia se inyecta. Por defecto es el guion de demo; el día
-     que entre WebLLM se pasa otro objeto con la misma forma y no se toca nada
-     más acá. useRef para que no se recree en cada render. */
-  const puerto = useRef(null);
-  if (puerto.current === null) puerto.current = llm || crearDemoLLM();
+  /* El puerto de inferencia se inyecta y no se reemplaza: useRef para que no se
+     recree en cada render. Sin puerto (equipo sin soporte) queda en null y
+     `speakReply` lo detecta antes de tocar nada. */
+  const puerto = useRef(undefined);
+  if (puerto.current === undefined) puerto.current = llm ?? null;
 
   const [screen, setScreen] = useState(initialScreen);
   const [obStep, setObStep] = useState(0);
@@ -40,7 +39,7 @@ export function useNadie({ initialScreen = 'onboarding', seedDemo = false, llm, 
   const [voiceId, setVoiceId] = useState(VOICES[0].id);
   const [previewing, setPreviewing] = useState(null);
 
-  const [convo, setConvo] = useState('idle'); // idle | listening | processing | speaking
+  const [convo, setConvo] = useState('idle'); // idle | processing | speaking
   const [paused, setPaused] = useState(false);
   const [turns, setTurns] = useState([]);
   const [live, setLive] = useState('');
@@ -79,11 +78,9 @@ export function useNadie({ initialScreen = 'onboarding', seedDemo = false, llm, 
   const propuestaRef = useRef(propuesta);
   propuestaRef.current = propuesta;
 
-  // speakReply es async: cuando resuelve, `turns` y `convo` ya cambiaron.
+  // speakReply es async: cuando resuelve, `turns` ya cambió.
   const turnsRef = useRef(turns);
   turnsRef.current = turns;
-  const convoRef = useRef(convo);
-  convoRef.current = convo;
 
   // Invalida respuestas en vuelo (ver speakReply).
   const generacion = useRef(0);
@@ -116,8 +113,8 @@ export function useNadie({ initialScreen = 'onboarding', seedDemo = false, llm, 
      setTurns y el ref todavía no se re-renderizó, así que leerlo mandaría la
      conversación sin el último turno — el modelo respondería a lo anterior.
 
-     La latencia la pone el puerto (el demo espera, WebLLM tarda de verdad), por
-     eso ya no hay un after(1000) inventado acá. */
+     La latencia la pone el puerto (el modelo tarda de verdad), por eso ya no hay
+     un after(1000) inventado acá. */
   const speakReply = useCallback(async (historia) => {
     /* Una respuesta en vuelo no se cancela con clearTimers: eso servía cuando
        esto era un setTimeout, no ahora que es una promesa. Si la persona habla
@@ -126,6 +123,11 @@ export function useNadie({ initialScreen = 'onboarding', seedDemo = false, llm, 
        uno viejo se descarta. */
     generacion.current += 1;
     const mia = generacion.current;
+
+    /* Sin puerto no hay a quién preguntarle. No debería llegar acá —la pantalla
+       de sin soporte tapa el orbe— pero si llegara, es mejor volver a idle que
+       reventar en una promesa sin catch. */
+    if (!puerto.current) { setLive(''); setConvo('idle'); return; }
 
     let respuesta;
     try {
@@ -155,38 +157,13 @@ export function useNadie({ initialScreen = 'onboarding', seedDemo = false, llm, 
     });
   }, [streamWords]);
 
-  const stopListening = useCallback(() => {
-    if (convoRef.current !== 'listening') return;
-    clearTimers();
-    const said = live;
-    if (!said) { setLive(''); setConvo('idle'); return; }
-
-    const siguiente = [...turnsRef.current, { who: QUIEN_USUARIO, text: said }];
-    setTurns(siguiente);
-    setLive('');
-    setConvo('processing');
-    speakReply(siguiente);
-  }, [clearTimers, live, speakReply]);
-
-  const startListening = useCallback((auto) => {
-    const line = DEMO_USER_LINES[Math.min(exchange, DEMO_USER_LINES.length - 1)];
-    setConvo('listening');
-    setLive('');
-    streamWords(line, 150, setLive, auto ? () => stopListeningRef.current() : null);
-  }, [exchange, streamWords]);
-
-  // stopListening cambia de identidad cada render; el stream necesita la última.
-  const stopListeningRef = useRef(stopListening);
-  stopListeningRef.current = stopListening;
-
   /* Camino de TEXTO. El README (§1.1 F1) pone el texto como requisito central y
      la voz como opcional, y el plan de 48h recorta la voz antes que casi todo:
      esto tiene que funcionar sin micrófono, sin permisos y sin que salga un
-     byte del dispositivo. Es el nivel 1 del router, el que corre con WebLLM.
+     byte del dispositivo.
 
-     Escribir interrumpe lo que esté pasando — clearTimers corta el guion de
-     demo a mitad de camino, igual que hablarle encima a alguien. La excepción
-     es mientras nadie habla: ahí la respuesta a medias se perdería. */
+     Escribir interrumpe lo que esté pasando. La excepción es mientras nadie
+     habla: ahí la respuesta a medias se perdería. */
   const canSend = !paused && convo !== 'speaking';
 
   const pushUserTurn = useCallback((text) => {
@@ -200,8 +177,7 @@ export function useNadie({ initialScreen = 'onboarding', seedDemo = false, llm, 
     speakReply(siguiente);
   }, [clearTimers, speakReply]);
 
-  const startSession = useCallback((heldMs) => {
-    if (heldMs != null && heldMs < 250) return; // un toque corto no abre sesión
+  const startSession = useCallback(() => {
     clearTimers();
     generacion.current += 1; // que no aterrice una respuesta de la sesión anterior
     setScreen('convo');
@@ -212,8 +188,8 @@ export function useNadie({ initialScreen = 'onboarding', seedDemo = false, llm, 
     setPaused(false);
     setRated(false);
     setPropuesta(null);
-    after(420, () => startListening(true));
-  }, [after, clearTimers, startListening]);
+    /* La sesión abre VACÍA y espera a que la persona escriba. */
+  }, [clearTimers]);
 
   const endSession = useCallback(() => {
     clearTimers();
@@ -345,8 +321,6 @@ export function useNadie({ initialScreen = 'onboarding', seedDemo = false, llm, 
       paused,
       turns, live, exchange,
       togglePause: () => setPaused((p) => !p),
-      hold: () => { if (convo === 'idle' && !paused) startListening(false); },
-      release: () => stopListening(),
       send: pushUserTurn,
       canSend,
       start: startSession,

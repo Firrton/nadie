@@ -8,8 +8,12 @@ export const VOICES = [
   { id: 'cauce', name: 'Cauce', desc: 'Clara y cercana', breatheDur: '2.9s', quote: 'Cuéntame. Se queda entre nosotros.' },
 ];
 
-/* Guion de demo del prototipo. En producción, USER_LINES viene del reconocimiento
-   de voz en el dispositivo y REPLIES del modelo. */
+/* Ejemplos de la voz de Nadie para el prompt del modelo (lib/llm/prompt.js).
+
+   NO son un guion en vivo: la app no tiene voz ni respuestas de respaldo. Son
+   turnos escritos y aprobados por marca que se le muestran al modelo como
+   few-shot para fijar el tono. Conservan el "demo" en el nombre porque de ahí
+   salieron. */
 export const DEMO_USER_LINES = [
   'Hoy fue uno de esos días en los que todo pesa. El trabajo, la casa, todo. Y no se lo puedo decir a nadie sin sentir que molesto.',
   'Es que no es algo grande, son mil cosas chicas. Y cuando lo cuento en voz alta suena menos grave de lo que se siente.',

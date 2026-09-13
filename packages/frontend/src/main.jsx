@@ -1,7 +1,7 @@
 import React from 'react';
 import { createRoot } from 'react-dom/client';
 import App from './App.jsx';
-import { arrancarIA, iaLocalActivada } from './lib/llm/arranque.js';
+import { arrancarIA } from './lib/llm/arranque.js';
 import { crearSeguimientoDeCarga } from './lib/llm/carga.js';
 import { asegurarPersistencia } from './lib/persistencia.js';
 import { caminoDeDemoActivado } from './lib/caminoDeDemo.js';
@@ -21,10 +21,10 @@ import './styles/theme.css';
    necesitan modelo: hacer esperar a alguien para que pueda anotar cómo se siente
    sería regalar la única parte que ya funciona.
 
-   PENDIENTE, Y BLOQUEADO POR COPY: mientras carga, quien intente hablar vuelve a
-   idle sin explicación. Falta lo que dice la pantalla mientras bajan 873 MB y lo
-   que dice si el equipo no puede. El copy del proyecto es final y no se inventa,
-   así que la IA local queda detrás de un flag hasta entonces (REGLAS §5). */
+   EL MODELO REAL ES EL ÚNICO CAMINO (ver arranque.js). La conversación es por
+   texto: no hay voz real todavía; si el equipo no puede con el modelo, se
+   muestra la pantalla de sin soporte en vez de fingir una conversación. El copy
+   de esa espera sigue pendiente de marca. */
 const raiz = createRoot(document.getElementById('root'));
 
 const seguimiento = crearSeguimientoDeCarga();
@@ -45,7 +45,6 @@ function dibujar() {
 }
 
 arrancarIA({
-  activado: iaLocalActivada(),
   onProgreso: (p) => {
     seguimiento.registrar(p);
     carga = { estado: 'cargando', ...seguimiento.estado() };
@@ -54,10 +53,8 @@ arrancarIA({
 }).then(({ puerto, modo, adaptador, modelo }) => {
   puertoActual = puerto;
 
-  /* 'demo' no muestra espera: no hay nada que esperar. */
   carga = modo === 'local' ? { estado: 'cargando', porcentaje: 0, segundosRestantes: null }
-    : modo === 'sin-soporte' ? { estado: 'sin-soporte' }
-      : null;
+    : { estado: 'sin-soporte' };
   dibujar();
 
   if (adaptador) {
@@ -85,7 +82,7 @@ arrancarIA({
     );
   }
 
-  if (typeof console !== 'undefined' && modo !== 'demo') {
+  if (typeof console !== 'undefined') {
     console.info('[nadie] inferencia: ' + modo + (modelo ? ' (' + modelo + ')' : ''));
   }
 });

@@ -1,8 +1,7 @@
 /* ¿Se siembra el mes de ejemplo en "Tu camino"?
 
-   Mismo patrón que `iaLocalActivada`: la URL manda y el entorno del build es el
-   respaldo. Que la URL gane es a propósito — en un ensayo tiene que poder
-   apagarse sin recompilar.
+   La URL manda y el entorno del build es el respaldo. Que la URL gane es a
+   propósito — en un ensayo tiene que poder apagarse sin recompilar.
 
    OJO: el mes sembrado vive en memoria hasta que la persona califica un ánimo.
    Ese guardado incluye los días sembrados, y desde ahí quedan en el dispositivo.

@@ -127,7 +127,7 @@ pnpm --filter @nadie/frontend test    # unit tests
 pnpm --filter @nadie/frontend test:e2e  # drives a real browser; needs Chromium
 ```
 
-Local inference is **off by default** and the app runs on a scripted stand-in, so the demo needs no download. Add `?ia=local` to the URL to turn on the real model.
+Local inference is the **only** path: there is no scripted stand-in. The first run downloads the weights into the browser cache; if the device has no WebGPU or not enough memory, the app shows a "no support" screen instead of faking a conversation.
 
 The first run with the real model downloads the weights into the browser cache. How long that takes depends entirely on the connection: we measured the same CDN at 37 KB/s and at 3.4 MB/s on the same day, so the app shows a percentage and only offers a time estimate once the measurement holds steady.
 
