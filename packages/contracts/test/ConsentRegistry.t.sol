@@ -594,99 +594,6 @@ contract ConsentRegistryTest is Test {
     }
 
     // -----------------------------------------------------------------
-    // revokeWithSig: firmas inválidas y replay
-    // -----------------------------------------------------------------
-
-    function test_revoke_rejectsSignatureByOtherSigner() public {
-        _grant();
-        // Firma de otherUser presentada como si fuera de user.
-        vm.prank(relayer);
-        vm.expectRevert(ConsentRegistry.InvalidSignature.selector);
-        consent.revokeWithSig(
-            g.consentId, g.user, 1, g.deadline, _sign(otherUserKey, _revokeDigest(g.consentId, g.user, 1, g.deadline))
-        );
-    }
-
-    function test_revoke_rejectsWrongChainIdDomain() public {
-        _grant();
-        // Firma hecha con el chainId actual; luego se cambia el chainId.
-        bytes memory sig = _sign(userKey, _revokeDigest(g.consentId, g.user, 1, g.deadline));
-        uint256 realChainId = block.chainid;
-        vm.chainId(realChainId + 1);
-        vm.prank(relayer);
-        vm.expectRevert(ConsentRegistry.InvalidSignature.selector);
-        consent.revokeWithSig(g.consentId, g.user, 1, g.deadline, sig);
-        vm.chainId(realChainId);
-    }
-
-    function test_revoke_rejectsWrongVerifyingContract() public {
-        _grant();
-        // Dominio con verifyingContract distinto a address(consent).
-        bytes32 domain = keccak256(
-            abi.encode(
-                keccak256("EIP712Domain(string name,string version,uint256 chainId,address verifyingContract)"),
-                keccak256("NadieConsentRegistry"),
-                keccak256("1"),
-                block.chainid,
-                address(uint160(uint256(uint160(address(consent))) + 1))
-            )
-        );
-        bytes32 digest = keccak256(
-            abi.encodePacked(
-                "\x19\x01",
-                domain,
-                keccak256(
-                    abi.encode(
-                        keccak256("Revoke(bytes32 consentId,address user,uint256 nonce,uint256 deadline)"),
-                        g.consentId,
-                        g.user,
-                        uint256(1),
-                        g.deadline
-                    )
-                )
-            )
-        );
-        vm.prank(relayer);
-        vm.expectRevert(ConsentRegistry.InvalidSignature.selector);
-        consent.revokeWithSig(g.consentId, g.user, 1, g.deadline, _sign(userKey, digest));
-    }
-
-    function test_revoke_rejectsInvalidV() public {
-        _grant();
-        (, bytes32 r, bytes32 s) = vm.sign(userKey, _revokeDigest(g.consentId, g.user, 1, g.deadline));
-        bytes memory badV = abi.encodePacked(r, s, uint8(0));
-        vm.prank(relayer);
-        vm.expectRevert(ConsentRegistry.InvalidSignature.selector);
-        consent.revokeWithSig(g.consentId, g.user, 1, g.deadline, badV);
-    }
-
-    function test_revoke_rejectsHighS() public {
-        _grant();
-        (, bytes32 r, bytes32 s) = vm.sign(userKey, _revokeDigest(g.consentId, g.user, 1, g.deadline));
-        bytes32 n = 0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFEBAAEDCE6AF48A03BBFD25E8CD0364141;
-        bytes32 highS = bytes32(uint256(n) - uint256(s));
-        bytes memory highSig = abi.encodePacked(r, highS, uint8(28));
-        vm.prank(relayer);
-        vm.expectRevert(ConsentRegistry.InvalidSignature.selector);
-        consent.revokeWithSig(g.consentId, g.user, 1, g.deadline, highSig);
-    }
-
-    function test_revoke_rejectsExactReplayOfExecutedRevocation() public {
-        _grant();
-        bytes32 id = g.consentId;
-        address u = g.user;
-        uint256 n = 1;
-        uint256 dl = g.deadline;
-        bytes memory sig = _sign(userKey, _revokeDigest(id, u, n, dl));
-        vm.prank(relayer);
-        consent.revokeWithSig(id, u, n, dl, sig);
-        // Replay exacto por otro relayer: el nonce ya se consumió.
-        vm.prank(otherRelayer);
-        vm.expectRevert(ConsentRegistry.InvalidNonce.selector);
-        consent.revokeWithSig(id, u, n, dl, sig);
-    }
-
-    // -----------------------------------------------------------------
     // open
     // -----------------------------------------------------------------
 
@@ -815,6 +722,99 @@ contract ConsentRegistryTest is Test {
         vm.prank(professional);
         vm.expectRevert(ConsentRegistry.ConsentNotFound.selector);
         consent.reply(keccak256("nope"), keccak256("respuesta"));
+    }
+
+    // -----------------------------------------------------------------
+    // revokeWithSig: firmas inválidas y replay
+    // -----------------------------------------------------------------
+
+    function test_revoke_rejectsSignatureByOtherSigner() public {
+        _grant();
+        // Firma de otherUser presentada como si fuera de user.
+        vm.prank(relayer);
+        vm.expectRevert(ConsentRegistry.InvalidSignature.selector);
+        consent.revokeWithSig(
+            g.consentId, g.user, 1, g.deadline, _sign(otherUserKey, _revokeDigest(g.consentId, g.user, 1, g.deadline))
+        );
+    }
+
+    function test_revoke_rejectsWrongChainIdDomain() public {
+        _grant();
+        // Firma hecha con el chainId actual; luego se cambia el chainId.
+        bytes memory sig = _sign(userKey, _revokeDigest(g.consentId, g.user, 1, g.deadline));
+        uint256 realChainId = block.chainid;
+        vm.chainId(realChainId + 1);
+        vm.prank(relayer);
+        vm.expectRevert(ConsentRegistry.InvalidSignature.selector);
+        consent.revokeWithSig(g.consentId, g.user, 1, g.deadline, sig);
+        vm.chainId(realChainId);
+    }
+
+    function test_revoke_rejectsWrongVerifyingContract() public {
+        _grant();
+        // Dominio con verifyingContract distinto a address(consent).
+        bytes32 domain = keccak256(
+            abi.encode(
+                keccak256("EIP712Domain(string name,string version,uint256 chainId,address verifyingContract)"),
+                keccak256("NadieConsentRegistry"),
+                keccak256("1"),
+                block.chainid,
+                address(uint160(uint256(uint160(address(consent))) + 1))
+            )
+        );
+        bytes32 digest = keccak256(
+            abi.encodePacked(
+                "\x19\x01",
+                domain,
+                keccak256(
+                    abi.encode(
+                        keccak256("Revoke(bytes32 consentId,address user,uint256 nonce,uint256 deadline)"),
+                        g.consentId,
+                        g.user,
+                        uint256(1),
+                        g.deadline
+                    )
+                )
+            )
+        );
+        vm.prank(relayer);
+        vm.expectRevert(ConsentRegistry.InvalidSignature.selector);
+        consent.revokeWithSig(g.consentId, g.user, 1, g.deadline, _sign(userKey, digest));
+    }
+
+    function test_revoke_rejectsInvalidV() public {
+        _grant();
+        (, bytes32 r, bytes32 s) = vm.sign(userKey, _revokeDigest(g.consentId, g.user, 1, g.deadline));
+        bytes memory badV = abi.encodePacked(r, s, uint8(0));
+        vm.prank(relayer);
+        vm.expectRevert(ConsentRegistry.InvalidSignature.selector);
+        consent.revokeWithSig(g.consentId, g.user, 1, g.deadline, badV);
+    }
+
+    function test_revoke_rejectsHighS() public {
+        _grant();
+        (, bytes32 r, bytes32 s) = vm.sign(userKey, _revokeDigest(g.consentId, g.user, 1, g.deadline));
+        bytes32 n = 0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFEBAAEDCE6AF48A03BBFD25E8CD0364141;
+        bytes32 highS = bytes32(uint256(n) - uint256(s));
+        bytes memory highSig = abi.encodePacked(r, highS, uint8(28));
+        vm.prank(relayer);
+        vm.expectRevert(ConsentRegistry.InvalidSignature.selector);
+        consent.revokeWithSig(g.consentId, g.user, 1, g.deadline, highSig);
+    }
+
+    function test_revoke_rejectsExactReplayOfExecutedRevocation() public {
+        _grant();
+        bytes32 id = g.consentId;
+        address u = g.user;
+        uint256 n = 1;
+        uint256 dl = g.deadline;
+        bytes memory sig = _sign(userKey, _revokeDigest(id, u, n, dl));
+        vm.prank(relayer);
+        consent.revokeWithSig(id, u, n, dl, sig);
+        // Replay exacto por otro relayer: el nonce ya se consumió.
+        vm.prank(otherRelayer);
+        vm.expectRevert(ConsentRegistry.InvalidNonce.selector);
+        consent.revokeWithSig(id, u, n, dl, sig);
     }
 
     // -----------------------------------------------------------------
