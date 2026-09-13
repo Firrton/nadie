@@ -221,9 +221,6 @@ Nadie is a companion, not a clinician.
 - **Crisis support today:** a fixed helpline in Settings. An automatic crisis detector is roadmap work.
 - **Audience and data:** the MVP is for adults only, and all demo data is synthetic.
 
-## Original work
-
-No code, components, design tokens, or application assets are inherited from another repository. The Nadie implementation is built from scratch in this repository during the buildathon.
 
 ![Nadie](docs/imagenes/nadie-imagen-2.png)
 
