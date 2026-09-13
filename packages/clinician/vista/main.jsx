@@ -91,7 +91,22 @@ const servicioDeEjemplo = {
     };
   },
   async registerEncryptionPublicKey() {},
-  async openAndDownload(consent) {
+  /* Recorre los mismos pasos que el servicio real, con pausas, para poder ver
+     en pantalla qué se le dice a la profesional en cada uno. */
+  async openAndDownload(consent, _llave, onStep = () => {}) {
+    const pausa = (ms) => new Promise((r) => setTimeout(r, ms));
+    if (!consent.firstOpenedAt) {
+      onStep("opening");
+      await pausa(1500);
+    }
+    onStep("preparing");
+    await pausa(600);
+    onStep("signing");
+    await pausa(2500);
+    onStep("downloading");
+    await pausa(800);
+    onStep("decrypting");
+    await pausa(500);
     consent.firstOpenedAt = consent.firstOpenedAt || ahora;
     return new TextEncoder().encode(DOCUMENTO);
   },

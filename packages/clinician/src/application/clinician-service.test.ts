@@ -86,6 +86,53 @@ describe("ClinicianService", () => {
     expect(gatewayPort.download).toHaveBeenCalledWith(consentId, challengeId, signature);
   });
 
+  /* Medido en el demo: la profesional pagó el open y "no pasó nada más". La
+     firma del mensaje (sin costo) quedó esperando en la billetera sin que nada
+     en pantalla lo dijera. Cada paso se informa para poder decirle qué confirmar. */
+  it("reports each step so the portal can tell the professional what to confirm", async () => {
+    const keyPair = await generateEncryptionKeyPair();
+    const envelope = await encryptPackage(new Uint8Array([1, 2, 3]), keyPair.publicKey, {
+      professional: professional.toLowerCase(),
+      scope: "graph-summary",
+    });
+    const gatewayPort = gateway(serializeEncryptedPackage(envelope), {
+      challengeId,
+      message: "challenge",
+      expiresAt: 9999999999,
+    });
+    const steps: string[] = [];
+
+    await new ClinicianService(chain(), gatewayPort).openAndDownload(
+      consent(hashEncryptedPackage(envelope) as Hex),
+      keyPair.privateKey,
+      (step) => steps.push(step),
+    );
+
+    expect(steps).toEqual(["opening", "preparing", "signing", "downloading", "decrypting"]);
+  });
+
+  it("does not report the opening step when the consent was already opened", async () => {
+    const keyPair = await generateEncryptionKeyPair();
+    const envelope = await encryptPackage(new Uint8Array([1, 2, 3]), keyPair.publicKey, {
+      professional: professional.toLowerCase(),
+      scope: "graph-summary",
+    });
+    const gatewayPort = gateway(serializeEncryptedPackage(envelope), {
+      challengeId,
+      message: "challenge",
+      expiresAt: 9999999999,
+    });
+    const steps: string[] = [];
+
+    await new ClinicianService(chain(), gatewayPort).openAndDownload(
+      consent(hashEncryptedPackage(envelope) as Hex, { firstOpenedAt: 42 }),
+      keyPair.privateKey,
+      (step) => steps.push(step),
+    );
+
+    expect(steps[0]).toBe("preparing");
+  });
+
   it("does not repeat open when firstOpenedAt is already set", async () => {
     const keyPair = await generateEncryptionKeyPair();
     const envelope = await encryptPackage(new Uint8Array([1, 2, 3]), keyPair.publicKey, {

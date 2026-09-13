@@ -13,6 +13,8 @@ import type {
   ProfessionalCredential,
 } from "../ports";
 
+export type ReadStep = "opening" | "preparing" | "signing" | "downloading" | "decrypting";
+
 export interface Dashboard {
   credential: ProfessionalCredential;
   consents: ProfessionalConsent[];
@@ -50,7 +52,15 @@ export class ClinicianService {
     return this.#chain.registerKey(publicKey);
   }
 
-  async openAndDownload(consent: ProfessionalConsent, privateKey: Uint8Array): Promise<Uint8Array> {
+  /* onStep existe por un caso real: la profesional pagó el open y la firma del
+     mensaje (sin costo) quedó esperando en la billetera sin que nada en pantalla
+     lo dijera. Cada paso se informa ANTES de empezar, así la pantalla puede
+     decir qué confirmar mientras la billetera espera. */
+  async openAndDownload(
+    consent: ProfessionalConsent,
+    privateKey: Uint8Array,
+    onStep: (step: ReadStep) => void = () => {},
+  ): Promise<Uint8Array> {
     if (privateKey.byteLength !== 32) throw new Error("Primero usa tu llave de lectura.");
     if (!consent.isValid || consent.revoked) throw new Error("La persona retiró el acceso o ya venció.");
     const connected = await this.#chain.currentAddress();
@@ -58,12 +68,19 @@ export class ClinicianService {
       throw new Error("Esta cuenta no es la de la profesional con quien se compartió.");
     }
 
-    if (consent.firstOpenedAt === 0) await this.#chain.open(consent.consentId);
+    if (consent.firstOpenedAt === 0) {
+      onStep("opening");
+      await this.#chain.open(consent.consentId);
+    }
 
+    onStep("preparing");
     const challenge = await this.#gateway.requestChallenge(consent.consentId, consent.professional);
+    onStep("signing");
     const signature = await this.#chain.signPersonalMessage(challenge.message);
+    onStep("downloading");
     const serialized = await this.#gateway.download(consent.consentId, challenge.challengeId, signature);
     try {
+      onStep("decrypting");
       const envelope = deserializeEncryptedPackage(serialized);
       if (hashEncryptedPackage(envelope).toLowerCase() !== consent.packageHash.toLowerCase()) {
         throw new Error("Lo que llegó no coincide con lo que la persona compartió, así que no se abrió.");

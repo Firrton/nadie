@@ -25,6 +25,22 @@ function safeMessage(error) {
   return error instanceof Error ? error.message : "No se pudo completar. Intenta de nuevo.";
 }
 
+/* Lo que la pantalla dice en cada paso de "Leer". La firma es el paso donde se
+   trabó el demo: la billetera no siempre abre su ventana sola. */
+const READ_STEPS = {
+  opening: {
+    title: "Registrando que lo vas a leer",
+    detail: "Confirma la operación en tu billetera digital. Tiene un costo mínimo de red.",
+  },
+  preparing: { title: "Preparando el acceso", detail: "Un momento." },
+  signing: {
+    title: "Confirma la firma en tu billetera digital",
+    detail: "No tiene costo. Si no ves la ventana, abre la extensión de tu billetera: la solicitud está esperando ahí.",
+  },
+  downloading: { title: "Descargando lo compartido", detail: "Viaja cifrado; nadie en el camino puede leerlo." },
+  decrypting: { title: "Abriéndolo en este equipo", detail: "Se descifra solo aquí, con tu llave de lectura." },
+};
+
 function statusOf(consent, now) {
   if (consent.revoked) return { label: "Retirado por la persona", on: false };
   if (consent.expiresAt <= now) return { label: "Venció", on: false };
@@ -42,6 +58,7 @@ export default function App({ service, chainId }) {
   const [keySaved, setKeySaved] = useState(false);
   const [selected, setSelected] = useState();
   const [plaintext, setPlaintext] = useState();
+  const [readStep, setReadStep] = useState();
   const [busy, setBusy] = useState("");
   const [notice, setNotice] = useState("");
   const [error, setError] = useState("");
@@ -141,14 +158,22 @@ export default function App({ service, chainId }) {
     await refresh();
   });
 
+  /* Dos cosas aprendidas en el demo:
+     - Mientras la billetera espera una confirmación, la pantalla dice cuál.
+     - La bandeja se actualiza SIEMPRE, también si algo falla después de abrir:
+       si no, el reintento cree que nunca se abrió y cobra otro open inútil. */
   const openAndRead = (consent) => run(`open:${consent.consentId}`, async () => {
     if (!privateKey) throw new Error("Primero usa tu llave de lectura.");
     clearPlaintext();
     setSelected(consent.consentId);
-    const decrypted = await service.openAndDownload(consent, privateKey);
-    setPlaintext(decrypted);
-    setNotice("Listo. Solo se ve en este equipo; ciérralo cuando termines.");
-    await refresh();
+    try {
+      const decrypted = await service.openAndDownload(consent, privateKey, setReadStep);
+      setPlaintext(decrypted);
+      setNotice("Listo. Solo se ve en este equipo; ciérralo cuando termines.");
+    } finally {
+      setReadStep(undefined);
+      await refresh().catch(() => {});
+    }
   });
 
   const decoded = plaintext ? new TextDecoder().decode(plaintext) : "";
@@ -171,6 +196,12 @@ export default function App({ service, chainId }) {
 
       {error ? <div className="notice notice--error" role="alert">{error}</div> : null}
       {notice ? <div className="notice" role="status">{notice}</div> : null}
+      {readStep ? (
+        <div className="notice notice--step" role="status" aria-live="polite">
+          <span className="t-heading">{READ_STEPS[readStep].title}</span>
+          <span className="t-small">{READ_STEPS[readStep].detail}</span>
+        </div>
+      ) : null}
 
       {!account ? (
         <section className="welcome">

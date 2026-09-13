@@ -57,6 +57,16 @@ body { min-height: 100vh; }
   color: var(--text-1);
 }
 .notice--error { border-color: var(--accent-a40); }
+.notice--step {
+  position: sticky;
+  top: var(--space-3);
+  z-index: 2;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  border-color: var(--accent-a40);
+  padding: var(--space-4) var(--space-5);
+}
 
 /* --- bienvenida --- */
 .welcome {
