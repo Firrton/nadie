@@ -21,19 +21,19 @@ describe("loadClinicianConfig", () => {
 
   it("fails closed when a contract address is missing", () => {
     expect(() => loadClinicianConfig({ ...valid, VITE_CONSENT_REGISTRY_ADDRESS: "" })).toThrow(
-      "Missing required configuration: VITE_CONSENT_REGISTRY_ADDRESS",
+      "Falta configurar VITE_CONSENT_REGISTRY_ADDRESS",
     );
   });
 
   it("rejects malformed chain and block configuration", () => {
     expect(() => loadClinicianConfig({ ...valid, VITE_CHAIN_ID: "133x" })).toThrow(
-      "Invalid numeric configuration: VITE_CHAIN_ID",
+      "VITE_CHAIN_ID tiene que ser un número",
     );
     expect(() => loadClinicianConfig({ ...valid, VITE_GRANTED_FROM_BLOCK: "-1" })).toThrow(
-      "Invalid numeric configuration: VITE_GRANTED_FROM_BLOCK",
+      "VITE_GRANTED_FROM_BLOCK tiene que ser un número",
     );
     expect(() => loadClinicianConfig({ ...valid, VITE_RPC_URL: "/rpc" })).toThrow(
-      "Invalid URL configuration: VITE_RPC_URL",
+      "VITE_RPC_URL no es una URL válida",
     );
   });
 });

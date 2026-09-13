@@ -15,14 +15,14 @@ type Environment = Record<string, string | boolean | undefined>;
 function required(env: Environment, name: string): string {
   const value = env[name];
   if (typeof value !== "string" || value.trim() === "") {
-    throw new Error(`Missing required configuration: ${name}`);
+    throw new Error(`Falta configurar ${name}`);
   }
   return value.trim();
 }
 
 function address(env: Environment, name: string): Address {
   const value = required(env, name);
-  if (!isAddress(value)) throw new Error(`Invalid address configuration: ${name}`);
+  if (!isAddress(value)) throw new Error(`${name} no es una dirección válida`);
   return getAddress(value);
 }
 
@@ -32,10 +32,10 @@ function absoluteUrl(env: Environment, name: string): string {
   try {
     parsed = new URL(value);
   } catch {
-    throw new Error(`Invalid URL configuration: ${name}`);
+    throw new Error(`${name} no es una URL válida`);
   }
   if (parsed.protocol !== "http:" && parsed.protocol !== "https:") {
-    throw new Error(`Invalid URL configuration: ${name}`);
+    throw new Error(`${name} no es una URL válida`);
   }
   return value;
 }
@@ -48,12 +48,12 @@ function urlOrPath(env: Environment, name: string): string {
 export function loadClinicianConfig(env: Environment): ClinicianConfig {
   const chainId = Number(required(env, "VITE_CHAIN_ID"));
   if (!Number.isSafeInteger(chainId) || chainId <= 0) {
-    throw new Error("Invalid numeric configuration: VITE_CHAIN_ID");
+    throw new Error("VITE_CHAIN_ID tiene que ser un número");
   }
 
   const grantedFromBlockRaw = required(env, "VITE_GRANTED_FROM_BLOCK");
   if (!/^\d+$/.test(grantedFromBlockRaw)) {
-    throw new Error("Invalid numeric configuration: VITE_GRANTED_FROM_BLOCK");
+    throw new Error("VITE_GRANTED_FROM_BLOCK tiene que ser un número");
   }
 
   return {

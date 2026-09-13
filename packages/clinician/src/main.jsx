@@ -10,11 +10,15 @@ import "./styles.css";
 
 function ConfigurationError({ message }) {
   return (
-    <main className="configuration-error">
-      <p className="eyebrow">Professional portal</p>
-      <h1>Configuration required</h1>
-      <p>{message}</p>
-      <p>Copy <code>.env.example</code> to <code>.env.local</code> and set the local deployment addresses.</p>
+    <main className="portal">
+      <section className="welcome">
+        <span className="t-logo">nadie</span>
+        <h1 className="t-title">Falta configurar el portal</h1>
+        <p className="t-body t-muted">{message}</p>
+        <p className="t-small">
+          Copia <code>.env.example</code> a <code>.env.local</code> y completa las direcciones del despliegue.
+        </p>
+      </section>
     </main>
   );
 }
@@ -27,6 +31,6 @@ try {
   const gateway = new HttpGatewayAdapter(config.gatewayUrl);
   root.render(<App service={new ClinicianService(chain, gateway)} chainId={config.chainId} />);
 } catch (error) {
-  const message = error instanceof Error ? error.message : "The portal configuration is invalid.";
+  const message = error instanceof Error ? error.message : "La configuración del portal no es válida.";
   root.render(<ConfigurationError message={message} />);
 }

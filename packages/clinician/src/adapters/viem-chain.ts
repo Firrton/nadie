@@ -47,13 +47,13 @@ export class ViemChainAdapter implements ChainPort {
 
   async connect(): Promise<Address> {
     if (!this.#provider || !this.#walletClient) {
-      throw new WalletUnavailableError("Install or enable an EVM wallet to continue.");
+      throw new WalletUnavailableError("Instala o activa una wallet EVM para continuar.");
     }
     await this.#ensureChain();
     await this.#assertWalletRpc();
     const addresses = await this.#walletClient.requestAddresses();
     const first = addresses[0];
-    if (!first || !isAddress(first)) throw new WalletUnavailableError("The wallet did not provide an account.");
+    if (!first || !isAddress(first)) throw new WalletUnavailableError("La wallet no entregó ninguna cuenta.");
     this.#account = getAddress(first);
     return this.#account;
   }
@@ -152,7 +152,7 @@ export class ViemChainAdapter implements ChainPort {
       args: [publicKey],
     });
     const hash = await this.#walletClient?.writeContract(simulation.request);
-    if (!hash) throw new WalletUnavailableError("The wallet is not connected.");
+    if (!hash) throw new WalletUnavailableError("La wallet no está conectada.");
     await this.#waitForSuccess(hash);
     return hash;
   }
@@ -167,7 +167,7 @@ export class ViemChainAdapter implements ChainPort {
       args: [consentId],
     });
     const hash = await this.#walletClient?.writeContract(simulation.request);
-    if (!hash) throw new WalletUnavailableError("The wallet is not connected.");
+    if (!hash) throw new WalletUnavailableError("La wallet no está conectada.");
     await this.#waitForSuccess(hash);
     return hash;
   }
@@ -175,7 +175,7 @@ export class ViemChainAdapter implements ChainPort {
   async signPersonalMessage(message: string): Promise<Hex> {
     const account = await this.#requireAccount();
     const signature = await this.#walletClient?.signMessage({ account, message });
-    if (!signature) throw new WalletUnavailableError("The wallet is not connected.");
+    if (!signature) throw new WalletUnavailableError("La wallet no está conectada.");
     return signature;
   }
 
@@ -189,7 +189,7 @@ export class ViemChainAdapter implements ChainPort {
       args: [consentId, responseHash],
     });
     const hash = await this.#walletClient?.writeContract(simulation.request);
-    if (!hash) throw new WalletUnavailableError("The wallet is not connected.");
+    if (!hash) throw new WalletUnavailableError("La wallet no está conectada.");
     await this.#waitForSuccess(hash);
     return hash;
   }
@@ -197,7 +197,7 @@ export class ViemChainAdapter implements ChainPort {
   async #requireAccount(): Promise<Address> {
     await this.#assertRpcChain();
     const account = this.#account ?? (await this.currentAddress());
-    if (!account) throw new WalletUnavailableError("Connect the professional wallet first.");
+    if (!account) throw new WalletUnavailableError("Primero conecta la wallet profesional.");
     await this.#ensureChain();
     await this.#assertWalletRpc();
     return account;
@@ -206,12 +206,12 @@ export class ViemChainAdapter implements ChainPort {
   async #assertRpcChain(): Promise<void> {
     const chainId = await this.#publicClient.getChainId();
     if (chainId !== this.#config.chainId) {
-      throw new WalletUnavailableError("The configured RPC uses the wrong chain.");
+      throw new WalletUnavailableError("El RPC configurado apunta a otra cadena.");
     }
   }
 
   async #ensureChain(): Promise<void> {
-    if (!this.#provider) throw new WalletUnavailableError("An EVM wallet is required.");
+    if (!this.#provider) throw new WalletUnavailableError("Hace falta una wallet EVM.");
     const chainId = numberToHex(this.#config.chainId);
     try {
       await this.#provider.request({ method: "wallet_switchEthereumChain", params: [{ chainId }] });
@@ -232,7 +232,7 @@ export class ViemChainAdapter implements ChainPort {
   }
 
   async #assertWalletRpc(): Promise<void> {
-    if (!this.#provider) throw new WalletUnavailableError("An EVM wallet is required.");
+    if (!this.#provider) throw new WalletUnavailableError("Hace falta una wallet EVM.");
     const [walletGenesis, configuredGenesis] = await Promise.all([
       this.#provider.request({ method: "eth_getBlockByNumber", params: ["0x0", false] }),
       this.#publicClient.getBlock({ blockNumber: 0n }),
@@ -240,14 +240,14 @@ export class ViemChainAdapter implements ChainPort {
     const walletHash = readBlockHash(walletGenesis);
     if (!walletHash || !configuredGenesis.hash || walletHash.toLowerCase() !== configuredGenesis.hash.toLowerCase()) {
       throw new WalletUnavailableError(
-        "The wallet network does not use the configured RPC. Select the local demo network in the wallet.",
+        "La red elegida en la wallet no usa el RPC de este portal. Cambia de red en la wallet.",
       );
     }
   }
 
   async #waitForSuccess(hash: Hex): Promise<void> {
     const receipt = await this.#publicClient.waitForTransactionReceipt({ hash });
-    if (receipt.status !== "success") throw new Error("The transaction was not confirmed.");
+    if (receipt.status !== "success") throw new Error("La transacción no se confirmó.");
   }
 }
 

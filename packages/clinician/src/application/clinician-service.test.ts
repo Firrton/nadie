@@ -124,7 +124,7 @@ describe("ClinicianService", () => {
         consent(hashEncryptedPackage(envelope) as Hex, { firstOpenedAt: 42 }),
         keyPair.privateKey,
       ),
-    ).rejects.toThrow("addressed to another professional");
+    ).rejects.toThrow("dirigido a otra profesional");
   });
 
   it("sends only the deterministic response hash to the chain port", async () => {
@@ -150,7 +150,7 @@ describe("ClinicianService", () => {
 
     await expect(
       service.reply(consent(`0x${"77".repeat(32)}` as Hex, { firstOpenedAt: 42 }), "Follow up."),
-    ).rejects.toThrow("not the authorized professional");
+    ).rejects.toThrow("no es la de la profesional autorizada");
     expect(chainPort.reply).not.toHaveBeenCalled();
   });
 });
@@ -158,6 +158,6 @@ describe("ClinicianService", () => {
 describe("parsePrivateKey", () => {
   it("accepts only an exact 32-byte hex value", () => {
     expect(parsePrivateKey(`0x${"ab".repeat(32)}`)).toHaveLength(32);
-    expect(() => parsePrivateKey("0x1234")).toThrow("32-byte X25519 private key");
+    expect(() => parsePrivateKey("0x1234")).toThrow("llave privada X25519 de 32 bytes");
   });
 });
