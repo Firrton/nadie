@@ -47,17 +47,3 @@ export function upsertEntry(entries, key, patch) {
   next[key] = Object.assign({}, entries[key], patch, { at: new Date().toISOString() });
   return next;
 }
-
-/* Convierte una serie de valores consecutivos en entradas con fecha, terminando
-   en `endDate`. Lo usa el sembrado de demo (ver useNadie) para transformar el
-   array posicional de content.js en un registro con fechas reales. */
-export function entriesFromSeries(values, endDate = new Date()) {
-  const entries = {};
-  values.forEach((score, i) => {
-    if (score == null) return;
-    const d = new Date(endDate);
-    d.setDate(d.getDate() - (values.length - 1 - i));
-    entries[dateKey(d)] = { score, at: d.toISOString() };
-  });
-  return entries;
-}

@@ -4,7 +4,6 @@ import App from './App.jsx';
 import { arrancarIA } from './lib/llm/arranque.js';
 import { crearSeguimientoDeCarga } from './lib/llm/carga.js';
 import { asegurarPersistencia } from './lib/persistencia.js';
-import { caminoDeDemoActivado } from './lib/caminoDeDemo.js';
 import { configDeCompartir } from './lib/compartir/red.js';
 import { crearCadena } from './lib/compartir/cadena.js';
 import { cargarOCrearCuenta } from './lib/compartir/cuenta.js';
@@ -30,7 +29,6 @@ const raiz = createRoot(document.getElementById('root'));
 const seguimiento = crearSeguimientoDeCarga();
 let carga = null;
 let puertoActual = null;
-const seedDemo = caminoDeDemoActivado();
 
 /* Compartir se arma acá, y solo si el entorno lo configuró entero. Sin config,
    `compartir` es null y la app ni siquiera ofrece el botón. La cuenta se carga
@@ -41,7 +39,7 @@ const compartir = configCompartir
   : null;
 
 function dibujar() {
-  raiz.render(<App llm={puertoActual} carga={carga} seedDemo={seedDemo} compartir={compartir} />);
+  raiz.render(<App llm={puertoActual} carga={carga} compartir={compartir} />);
 }
 
 arrancarIA({

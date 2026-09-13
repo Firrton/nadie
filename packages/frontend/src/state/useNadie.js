@@ -1,8 +1,8 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { DEMO_MONTH, VOICES } from '../data/content.js';
+import { VOICES } from '../data/content.js';
 import { clearMoodLog, loadMoodLog, saveMoodLog } from '../lib/storage.js';
 import { asegurarPersistencia } from '../lib/persistencia.js';
-import { dateKey, entriesFromSeries, lastNDays, upsertEntry } from '../lib/moodLog.js';
+import { dateKey, lastNDays, upsertEntry } from '../lib/moodLog.js';
 import { QUIEN_NADIE, QUIEN_USUARIO, turnosAMensajes } from '../lib/llm/messages.js';
 import { entradaDeCheckIn, proponerCheckIn } from '../lib/llm/checkin.js';
 import { prepararBorrador } from '../lib/compartir/flujo.js';
@@ -19,14 +19,14 @@ import { unaALaVez } from '../lib/compartir/unaALaVez.js';
    el modelo real. Si no hay puerto no hay conversación — la app muestra la
    pantalla de sin soporte en vez de inventar respuestas.
 
-   `seedDemo` siembra el mes de ejemplo de content.js para poder revisar "Tu
-   camino" con datos. Es opt-in explícito y ESCRIBE en el almacenamiento del
-   dispositivo: no lo actives en la app real. */
+   El registro de ánimo sale SOLO de lo que la persona guardó en el dispositivo.
+   No hay mes de ejemplo: lo que se ve en "Tu camino" y lo que se comparte con la
+   psicóloga es siempre suyo. */
 
 const VENTANA_DIAS = 28;
 const NOTA_MAX = 500;
 
-export function useNadie({ initialScreen = 'onboarding', seedDemo = false, llm, compartir = null } = {}) {
+export function useNadie({ initialScreen = 'onboarding', llm, compartir = null } = {}) {
   /* El puerto de inferencia se inyecta y no se reemplaza: useRef para que no se
      recree en cada render. Sin puerto (equipo sin soporte) queda en null y
      `speakReply` lo detecta antes de tocar nada. */
@@ -58,13 +58,7 @@ export function useNadie({ initialScreen = 'onboarding', seedDemo = false, llm, 
   const [compartirResultado, setCompartirResultado] = useState(null);
 
   /* El registro: mapa por fecha, leído del dispositivo una sola vez. */
-  const [entries, setEntries] = useState(() => {
-    const guardado = loadMoodLog();
-    if (Object.keys(guardado).length > 0 || !seedDemo) return guardado;
-    const ayer = new Date();
-    ayer.setDate(ayer.getDate() - 1);
-    return entriesFromSeries(DEMO_MONTH, ayer);
-  });
+  const [entries, setEntries] = useState(() => loadMoodLog());
 
   const timers = useRef([]);
   const pausedRef = useRef(false);

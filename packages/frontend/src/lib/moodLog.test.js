@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { dateKey, entriesFromSeries, lastNDays, upsertEntry } from './moodLog.js';
+import { dateKey, lastNDays, upsertEntry } from './moodLog.js';
 
 /* Estos tests corren con TZ=America/Mexico_City (ver el script "test" en
    package.json). La zona importa: es el mercado principal y está en UTC-6, que
@@ -69,21 +69,5 @@ describe('upsertEntry', () => {
     const despues = upsertEntry(antes, '2026-09-11', { score: 9 });
 
     expect(despues['2026-09-11']).toMatchObject({ score: 9, note: 'algo' });
-  });
-});
-
-describe('entriesFromSeries', () => {
-  it('mapea la serie a días consecutivos terminando en endDate', () => {
-    const out = entriesFromSeries([3, 5, 7], new Date(2026, 8, 11, 12));
-
-    expect(Object.keys(out).sort()).toEqual(['2026-09-09', '2026-09-10', '2026-09-11']);
-    expect(out['2026-09-11'].score).toBe(7);
-  });
-
-  it('saltea los nulls en vez de guardarlos', () => {
-    const out = entriesFromSeries([3, null, 7], new Date(2026, 8, 11, 12));
-
-    expect(out['2026-09-10']).toBeUndefined();
-    expect(Object.keys(out)).toHaveLength(2);
   });
 });

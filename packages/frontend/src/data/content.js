@@ -26,22 +26,6 @@ export const DEMO_REPLIES = [
   'Para eso está este espacio. Lo dijiste, y ya no está solo en tu cabeza. Cuando quieras cerrar, aquí sigo.',
 ];
 
-/* Ánimo de demo: 27 días previos a hoy. NO es el estado inicial de la app — un
-   usuario nuevo arranca con el registro vacío y "Tu camino" ya tiene copy para
-   eso. Solo se usa con useNadie({ seedDemo: true }), para revisar el diseño con
-   datos.
-
-   Solo usa los cinco pasos de RATING_STEPS (1/3/5/7/9), y eso es una corrección,
-   no una limitación: el único camino que escribe ánimo es `rateToday`, así que un
-   mes real SIEMPRE es una escalera de cinco niveles. La serie anterior tenía
-   valores intermedios que ninguna persona podía producir, y dibujaba una curva
-   más suave que la que el usuario va a ver. Una demo que se ve mejor que el
-   producto es una demo que miente. */
-export const DEMO_MONTH = [
-  3, 3, null, 3, 5, 3, null, 5, 5, 3, null, 5, 5, 5,
-  null, 5, 7, null, 5, 7, 5, 7, null, 7, 7, 9, 7,
-];
-
 /* Frases para la espera de la primera carga del modelo.
 
    Bajar los pesos tarda, y una barra sola es hostil. Estas frases las eligió el
