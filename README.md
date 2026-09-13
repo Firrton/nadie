@@ -9,7 +9,8 @@ An emotional companion that runs a language model inside your browser, keeps you
 | | |
 |---|---|
 | Demo video | `TODO_SUNDAY_VIDEO_URL` |
-| Live app | `TODO_SUNDAY_APP_URL` |
+| Live app (person) | https://nadie-app.onrender.com — desktop Chromium with WebGPU recommended |
+| Live portal (psychologist) | https://nadie-portal.onrender.com |
 | Technical documentation | [docs/TECHNICAL.md](docs/TECHNICAL.md) — track, architecture, features, roadmap |
 | Original design document (Spanish) | [docs/ARQUITECTURA.MD](docs/ARQUITECTURA.MD) — the pre-event design; broader than what was built |
 | Development rules (Spanish) | [docs/REGLAS.md](docs/REGLAS.md) |
