@@ -70,3 +70,8 @@ next-env.d.ts
 # Claude Code worktrees (viven dentro del repo, no se versionan)
 .claude/worktrees/
 .data/
+
+# Local model research artifacts
+.venv/
+.ipynb_checkpoints/
+research/model-evaluation/results/
