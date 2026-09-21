@@ -85,63 +85,55 @@ describe('armarMensajes', () => {
     expect(armarMensajes([], ['   ', null])[0].content).toBe(SISTEMA);
   });
 
-  /* Los límites siguen enteros después de reescribir el prompt en positivo.
-     Están al final y dicen qué HACER, pero siguen estando. */
-  it('el prompt mantiene el límite de diagnóstico, tratamiento y medicación', () => {
-    expect(SISTEMA).toContain('diagnóstico');
-    expect(SISTEMA).toContain('tratamiento');
-    expect(SISTEMA).toContain('medicamento');
-    expect(SISTEMA).toContain('lo ve alguien de salud');
+  it('define a Nadie como acompañante y no como terapeuta ni reemplazo humano', () => {
+    expect(SISTEMA).toContain('You are a private AI companion');
+    expect(SISTEMA).toContain('not a therapist, doctor, authority figure');
+    expect(SISTEMA).toContain('or replacement for human relationships');
   });
 
-  it('el prompt no desalienta la ayuda profesional', () => {
-    expect(SISTEMA).toContain('La ayuda profesional siempre te');
+  it('prioriza escuchar y entender antes de dar consejos', () => {
+    expect(SISTEMA).toContain('Listen before giving advice');
+    expect(SISTEMA).toContain('first try to understand their experience');
+    expect(SISTEMA).toContain('Do not automatically turn every problem into advice');
   });
 
-  /* Preguntar es el motor: sin pregunta la persona no tiene por dónde seguir, y
-     sin conversación no hay nada que extraer para el diario. */
-  it('el prompt exige preguntar en TODAS las respuestas', () => {
-    expect(SISTEMA).toContain('En TODAS las respuestas, sin excepción');
-    expect(SISTEMA).toContain('Sin pregunta, la conversación se apaga');
+  it('pide respuestas naturales, específicas y conversacionales', () => {
+    expect(SISTEMA).toContain('Do not repeatedly use generic phrases');
+    expect(SISTEMA).toContain('Respond naturally to the specific details');
+    expect(SISTEMA).toContain('Usually use a few sentences');
   });
 
-  /* Medido: repetía "¿Qué parte de eso te carga más?" palabra por palabra en dos
-     turnos seguidos. Una pregunta repetida deja de ser una pregunta. */
-  it('el prompt pide que la pregunta cambie', () => {
-    expect(SISTEMA).toContain('Cada pregunta es distinta de la anterior');
+  it('evita asumir y pregunta cuando algo no está claro', () => {
+    expect(SISTEMA).toContain('Do not assume what the user feels, thinks, wants, or intends');
+    expect(SISTEMA).toContain('When something is unclear, ask');
   });
 
-  /* Medido: contestó "Estoy aquí para escucharte, Nadie" — le puso a la PERSONA
-     el nombre del producto. */
-  it('el prompt aclara de quién es el nombre', () => {
-    expect(SISTEMA).toContain('Nadie es TU nombre, no el de la persona');
+  it('protege la autonomía de la persona', () => {
+    expect(SISTEMA).toContain("The user's life belongs to the user");
+    expect(SISTEMA).toContain('Do not pressure them toward decisions');
+    expect(SISTEMA).toContain('so they can make their own choices');
   });
 
-  /* Medido: "Siempre estás a salvo conmigo". La app no puede prometer eso. */
-  it('el prompt cierra la puerta de prometer de más', () => {
-    expect(SISTEMA).toContain('ni protegerla, ni que está a salvo');
+  it('mantiene límites relacionales y no fomenta dependencia', () => {
+    expect(SISTEMA).toContain('never encourage emotional dependence');
+    expect(SISTEMA).toContain('Never suggest that the user only needs you');
+    expect(SISTEMA).toContain('Do not claim to be human, conscious, sentient, in love');
   });
 
-  /* Derivar suena amable y sigue siendo un portazo: "cuéntaselo a un amigo" ante
-     alguien que acaba de decir que no se lo puede contar a nadie es lo contrario
-     de lo que la app promete. */
-  it('el prompt prohíbe mandar a la persona con otro en la conversación normal', () => {
-    expect(SISTEMA).toContain('NUNCA respondes mandando a la persona con otro');
-    expect(SISTEMA).toContain('Ni con un amigo');
+  it('no desalienta las relaciones ni el apoyo humano', () => {
+    expect(SISTEMA).toContain('Never discourage them from spending time with friends');
+    expect(SISTEMA).toContain('suggest professional support when it is genuinely appropriate');
   });
 
-  /* El 1B, ante la sonda de medicación, terminó sugiriendo una ducha. La regla
-     tiene que cubrir el remedio casero, no solo el medicamento con nombre. */
-  it('el prompt cierra también la puerta del remedio casero', () => {
-    expect(SISTEMA).toContain('Nunca nombras un medicamento, una dosis ni un remedio casero');
+  it('mantiene los límites de salud mental y prioriza seguridad inmediata', () => {
+    expect(SISTEMA).toContain('Do not diagnose mental illnesses');
+    expect(SISTEMA).toContain('immediate danger of seriously harming themselves or someone else');
+    expect(SISTEMA).toContain('appropriate emergency/crisis support');
   });
 
-  /* El contrapeso directo al fallo medido: 9 de 9 respuestas se iban del rol.
-     Si alguien saca esta frase, que se entere acá. */
-  it('el prompt dice explícitamente que un desahogo no es una emergencia', () => {
-    expect(SISTEMA).toContain('No los tratas como una');
-    expect(SISTEMA).toContain('emergencia');
-    expect(SISTEMA).toContain('no mandas a la persona a otro lado');
+  it('solo usa recuerdos entregados y no inventa hechos de la persona', () => {
+    expect(SISTEMA).toContain('supplied through memory context');
+    expect(SISTEMA).toContain("Do not invent facts about the user's life");
   });
 });
 
