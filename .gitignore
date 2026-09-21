@@ -73,5 +73,6 @@ next-env.d.ts
 
 # Local model research artifacts
 .venv/
+__pycache__/
 .ipynb_checkpoints/
 research/model-evaluation/results/

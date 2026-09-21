@@ -2,9 +2,42 @@ import { describe, expect, it } from "vitest";
 
 import {
   MemoryExtractionSchema,
+  MemoryCapsuleSchema,
+  SessionDigestSchema,
   CheckInProposalSchema,
   ShareSummaryDraftSchema,
 } from "./schemas";
+
+const boundedMemory = {
+  important: ["El trabajo le está quitando tiempo de descanso"],
+  people: ["Ana es su hermana"],
+  openLoops: ["Quiere hablar con Ana este fin de semana"],
+  recentChanges: ["Esta semana está durmiendo mejor"],
+};
+
+describe.each([
+  ["SessionDigestSchema", SessionDigestSchema],
+  ["MemoryCapsuleSchema", MemoryCapsuleSchema],
+])("%s", (_name, schema) => {
+  it("acepta una memoria acotada", () => {
+    expect(schema.parse(boundedMemory)).toEqual(boundedMemory);
+  });
+
+  it("rechaza campos desconocidos", () => {
+    expect(() => schema.parse({ ...boundedMemory, diagnosis: "ansiedad" })).toThrow();
+  });
+
+  it("rechaza elementos de más y textos demasiado largos", () => {
+    expect(() => schema.parse({
+      ...boundedMemory,
+      important: Array.from({ length: 5 }, (_, i) => `Dato ${i}`),
+    })).toThrow();
+    expect(() => schema.parse({
+      ...boundedMemory,
+      important: ["x".repeat(81)],
+    })).toThrow();
+  });
+});
 
 describe("MemoryExtractionSchema", () => {
   const valid = {

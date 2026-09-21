@@ -215,7 +215,7 @@ export interface LLMPort {
   ): Promise<readonly ChatMessage[]>;
   extract(
     transcript: readonly ChatMessage[],
-    schema: "memory" | "checkin" | "share-summary",
+    schema: "memory" | "session-digest" | "memory-capsule" | "checkin" | "share-summary",
   ): Promise<unknown>;
 }
 

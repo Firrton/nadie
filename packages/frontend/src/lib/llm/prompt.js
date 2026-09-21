@@ -1,4 +1,4 @@
-import { DEMO_REPLIES, DEMO_USER_LINES } from '../../data/content.js';
+import { EJEMPLOS_CONVERSACION } from '../../data/content.js';
 
 /* Instrucciones conversacionales del modelo. Esto es política de producto y
    seguridad, no una configuración incidental. Vive separado del adaptador para
@@ -88,17 +88,12 @@ export const SISTEMA = [
   'The goal is to understand the person you are speaking with and help them continue thinking and talking when that is useful.',
 ].join('\n');
 
-/* Ejemplos de la voz de Nadie, en turnos reales.
-
-   Es la palanca más fuerte que existe en un modelo chico: mostrarle una vez cómo
-   suena la respuesta correcta pesa más que describírsela. Y NO INVENTA COPY —
-   son las líneas de content.js, escritas y aprobadas por marca para el demo.
-
-   Dos pares y no tres: alcanzan para fijar el tono y dejan contexto libre para
-   la conversación real, que es la que importa. */
-const EJEMPLOS = DEMO_USER_LINES.slice(0, 2).flatMap((linea, i) => [
-  { role: 'user', content: linea },
-  { role: 'assistant', content: DEMO_REPLIES[i] },
+/* Dos pares contrastivos: escuchar sin resolver y ayudar a pensar cuando la
+   persona sí lo pide. Dos alcanzan para marcar la conducta sin gastar el
+   contexto corto del modelo. */
+const EJEMPLOS = EJEMPLOS_CONVERSACION.flatMap((ejemplo) => [
+  { role: 'user', content: ejemplo.user },
+  { role: 'assistant', content: ejemplo.assistant },
 ]);
 
 const ENCABEZADO_CONTEXTO = 'Esto es lo que ya sabes de esta persona. Úsalo solo si viene al caso; no lo recites:';

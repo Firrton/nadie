@@ -92,6 +92,24 @@ export const MemoryExtractionSchema = z
 
 export type MemoryExtraction = z.output<typeof MemoryExtractionSchema>;
 
+/* El mismo contrato acotado sirve para resumir una sesión y para la cápsula
+   acumulativa. Son conceptos distintos, pero duplicar la forma permitiría que
+   divergieran sin querer. */
+const BoundedMemorySchema = z
+  .object({
+    important: z.array(z.string().trim().min(1).max(80)).max(4),
+    people: z.array(z.string().trim().min(1).max(80)).max(3),
+    openLoops: z.array(z.string().trim().min(1).max(80)).max(3),
+    recentChanges: z.array(z.string().trim().min(1).max(80)).max(2),
+  })
+  .strict();
+
+export const SessionDigestSchema = BoundedMemorySchema;
+export const MemoryCapsuleSchema = BoundedMemorySchema;
+
+export type SessionDigest = z.output<typeof SessionDigestSchema>;
+export type MemoryCapsule = z.output<typeof MemoryCapsuleSchema>;
+
 /**
  * Propuesta de check-in derivada de la conversación. Nunca se guarda sin
  * confirmación de la persona (docs/ARQUITECTURA.MD §6).

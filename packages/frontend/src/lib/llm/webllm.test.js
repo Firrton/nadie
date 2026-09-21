@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from 'vitest';
 import { EMOTION_LABELS } from '@nadie/core';
-import { DEMO_REPLIES, DEMO_USER_LINES } from '../../data/content.js';
+import { EJEMPLOS_CONVERSACION } from '../../data/content.js';
 import { MODELO_POR_DEFECTO, crearWebLLM } from './webllm.js';
 import { SISTEMA, armarMensajes, armarMensajesDeExtraccion } from './prompt.js';
 
@@ -62,16 +62,16 @@ describe('armarMensajes', () => {
     expect(out[0].content).toContain('le cuesta dormir');
   });
 
-  /* La palanca más fuerte que existe en un modelo chico: mostrarle cómo suena la
-     respuesta correcta pesa más que describírsela. Y sale de content.js, escrito
-     por marca — el banco no puede inventar la voz del producto. */
-  it('muestra ejemplos de la voz de Nadie, sacados del copy aprobado', () => {
+  /* En un modelo chico, mostrar la conducta esperada pesa más que describirla.
+     Los ejemplos viven en content.js para que prompt y tests compartan fuente. */
+  it('muestra exactamente dos ejemplos contrastivos de la voz de Nadie', () => {
     const out = armarMensajes([{ role: 'user', content: 'hola', at: 1 }], []);
-    const asistente = out.filter((m) => m.role === 'assistant').map((m) => m.content);
+    const ejemplos = out.slice(1, 5);
 
-    expect(asistente.length).toBeGreaterThan(0);
-    asistente.forEach((c) => expect(DEMO_REPLIES).toContain(c));
-    expect(out.filter((m) => m.role === 'user').map((m) => m.content)).toContain(DEMO_USER_LINES[0]);
+    expect(ejemplos).toEqual(EJEMPLOS_CONVERSACION.flatMap((ejemplo) => [
+      { role: 'user', content: ejemplo.user },
+      { role: 'assistant', content: ejemplo.assistant },
+    ]));
   });
 
   it('los ejemplos van ANTES de lo que dijo la persona, no después', () => {

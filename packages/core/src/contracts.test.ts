@@ -9,6 +9,7 @@ import type {
   CheckIn,
   ConsentGrant,
   FirstOpening,
+  LLMPort,
   MemoryRecord,
   MoodTrend,
   NadieCore,
@@ -203,5 +204,13 @@ describe("contratos de tipos", () => {
     expect(EMOTION_LABELS).toHaveLength(12);
     expect(MEMORY_TYPES).toHaveLength(5);
     expect(RISK_LEVELS).toHaveLength(3);
+  });
+
+  it("el puerto del modelo reconoce las dos etapas de memoria acotada", () => {
+    const schemas: Array<Parameters<LLMPort["extract"]>[1]> = [
+      "session-digest",
+      "memory-capsule",
+    ];
+    expect(schemas).toEqual(["session-digest", "memory-capsule"]);
   });
 });

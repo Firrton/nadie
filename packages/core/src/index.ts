@@ -44,6 +44,8 @@ export {
   MEMORY_TYPES,
   RISK_LEVELS,
   MemoryExtractionSchema,
+  SessionDigestSchema,
+  MemoryCapsuleSchema,
   CheckInProposalSchema,
   ShareSummaryDraftSchema,
   DateRangeSchema,
@@ -51,6 +53,8 @@ export {
 
 export type {
   MemoryExtraction,
+  SessionDigest,
+  MemoryCapsule,
   CheckInProposal,
   ShareSummaryDraft,
 } from "./schemas";

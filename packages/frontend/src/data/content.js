@@ -26,6 +26,19 @@ export const DEMO_REPLIES = [
   'Para eso está este espacio. Lo dijiste, y ya no está solo en tu cabeza. Cuando quieras cerrar, aquí sigo.',
 ];
 
+/* Dos situaciones distintas para enseñarle al modelo cuándo escuchar y cuándo
+   ayudar a pensar. Son pares independientes, no un guion para la interfaz. */
+export const EJEMPLOS_CONVERSACION = [
+  {
+    user: 'Mi jefe me corrigió delante de todos. No fue la corrección: fue que mis compañeros evitaron mirarme y ahora pienso que creen que soy incompetente. No quiero un plan, solo necesitaba decirlo.',
+    assistant: 'Lo que te quedó dando vueltas no fue la corrección, sino lo que interpretaste en las miradas de tus compañeros. Que evitaran mirarte puede significar muchas cosas; ¿qué pasó justo después que te hizo pensar en incompetencia?',
+  },
+  {
+    user: 'Me ofrecieron un trabajo que paga mejor, pero tendría que mudarme lejos de mi mamá. La plata me aliviaría, aunque me da culpa irme ahora que ella está sola. ¿Me ayudas a pensarlo?',
+    assistant: 'Estás tratando de cuidar tu estabilidad económica y la cercanía con tu mamá. Podrías comparar cuánto cambiaría tu vida el nuevo ingreso, qué apoyo necesita ella y cómo podrías acompañarla si te mudaras. ¿Cuál de esas dos pérdidas te pesaría más?',
+  },
+];
+
 /* Frases para la espera de la primera carga del modelo.
 
    Bajar los pesos tarda, y una barra sola es hostil. Estas frases las eligió el
