@@ -1,0 +1,145 @@
+# SDD configuration for nadie. Read by every SDD phase.
+schema: spec-driven
+project: nadie
+initialized: 2026-09-22
+
+sdd:
+  artifact_store: openspec
+  execution_mode: interactive
+  delivery_strategy: ask-on-risk
+  review_budget_lines: 400
+
+context: |
+  Nadie: private, on-device AI for emotional venting. pnpm 10 monorepo, Node >=20, ESM everywhere.
+  frontend: React 18 + Vite 5, plain JS/JSX, mobile-first (390px), dark-only, Spanish; WebLLM (WebGPU) local inference.
+  clinician: React + Vite + TS portal. core, gateway, relayer, e2e: strict TypeScript (Hono, viem, zod, HPKE).
+  contracts: Solidity 0.8.24 + Foundry, evm cancun, deployed on HashKey Chain Testnet (133).
+  research/model-evaluation: Python 3.12 harness (stdlib unittest) plus notebooks for local model evaluation.
+  Architecture: ports & adapters. core owns schemas and ports; apps implement adapters; dependencies are injected for tests.
+  Style: comments in Spanish explaining WHY; identifiers follow the surrounding file; tests colocated as *.test.{js,ts}.
+  QUALITY OVER QUANTITY (user mandate): small readable changes, minimal surface, no speculative abstractions, every line traced to a spec requirement.
+  Sources of truth: packages/frontend/CLAUDE.md (non-negotiables), docs/REGLAS.md (invariants, partly stale), READMEs.
+
+# Strict TDD is on where a runner exists and docs/REGLAS.md §9 does not exempt the code.
+# REGLAS §9: "Tests antes que implementación en core y en contracts. En la UI, no."
+# The logic REGLAS assigned to core (vault, LLM, memory) now lives in packages/frontend/src/lib.
+strict_tdd: true
+strict_tdd_scope:
+  enforced:
+    - packages/frontend/src/lib/**
+    - packages/core/**
+    - packages/contracts/**
+    - packages/gateway/**
+    - packages/relayer/**
+    - packages/clinician/src/application/**
+    - packages/clinician/src/adapters/**
+    - research/model-evaluation/evaluation_harness.py
+  exempt:
+    - path: packages/frontend/src/{screens,components,styles}/**, App.jsx, main.jsx
+      reason: UI (REGLAS §9); no DOM test environment installed. Verify with test:e2e or manually.
+    - path: packages/frontend/src/state/**
+      reason: React hook; no renderer in test deps. Keep testable logic in src/lib (existing pattern).
+    - path: packages/clinician/src/ui/**, App.jsx, main.jsx
+      reason: UI (REGLAS §9).
+    - path: research/model-evaluation/*.ipynb
+      reason: Exploratory notebooks.
+
+testing:
+  detected: 2026-09-22
+  env_note: >-
+    Agent shells may not load nvm, so node and pnpm can be missing from PATH. Prepend an nvm
+    Node 20/22 bin dir (pnpm 10.29.3 per packageManager) before running any pnpm/node command.
+  ci: none (no .github/workflows)
+  commands:
+    all_unit: pnpm test                    # every package, incl. forge test; excludes frontend e2e and backend e2e
+    build: pnpm build
+    typecheck: pnpm typecheck              # TS packages + forge build --sizes; frontend has no typecheck
+  packages:
+    frontend:
+      runner: Vitest 2.1.9 (node environment)
+      test: pnpm --filter @nadie/frontend test
+      single_file: pnpm --filter @nadie/core build && TZ=America/Mexico_City pnpm --filter @nadie/frontend exec vitest run <path>
+      e2e: pnpm --filter @nadie/frontend test:e2e   # one-time: pnpm --filter @nadie/frontend exec playwright install chromium
+      gotchas:
+        - The test script builds @nadie/core first and pins TZ=America/Mexico_City; date tests depend on it.
+        - test/no-external-requests.test.js audits dist/ only if it exists. Run build first when a change touches network, deps or env.
+      layers: {unit: vitest, integration: none (no testing-library/jsdom), e2e: "playwright 1.63 driven by vitest (test/e2e)"}
+      coverage: none (no @vitest/coverage-* installed)
+      lint: none
+      format: none
+      typecheck: none (plain JS)
+    core:
+      runner: Vitest 3.2.7
+      test: pnpm --filter @nadie/core test
+      typecheck: pnpm --filter @nadie/core typecheck
+      coverage: none
+    gateway:
+      runner: Vitest 3.2.7
+      test: pnpm --filter @nadie/gateway test
+      typecheck: pnpm --filter @nadie/gateway typecheck
+      coverage: none
+    relayer:
+      runner: Vitest 3.2.7
+      test: pnpm --filter @nadie/relayer test
+      typecheck: pnpm --filter @nadie/relayer typecheck
+      coverage: none
+    clinician:
+      runner: Vitest 3.2.7
+      test: pnpm --filter @nadie/clinician test
+      typecheck: pnpm --filter @nadie/clinician typecheck
+      coverage: none
+    contracts:
+      runner: Foundry forge 1.5.0 (solc 0.8.24, evm cancun)
+      test: pnpm --filter @nadie/contracts test   # forge test
+      single_test: forge test --match-test <name>   # run inside packages/contracts
+      coverage: forge coverage
+      format: forge fmt (built in; no config, not enforced)
+      typecheck: pnpm --filter @nadie/contracts typecheck   # forge build --sizes
+    e2e:
+      runner: Vitest 3.2.7 on a local Anvil chain
+      test: pnpm test:backend-e2e   # builds contracts, core, gateway, relayer first; needs anvil
+      smoke: pnpm smoke:backend:hashkey   # read-only, needs network
+    model_evaluation:
+      runner: Python 3.12.6 stdlib unittest (pytest is NOT installed)
+      test: .venv/bin/python -m unittest test_evaluation_harness   # run inside research/model-evaluation
+      gotchas:
+        - Needs node on PATH. The harness shells out to node to import frontend prompt.js; without it one test errors with FileNotFoundError 'node'.
+      coverage: none
+      lint: none
+
+rules:
+  all_phases:
+    - Quality over quantity. Prefer the smallest change that satisfies the spec. No speculative abstractions, flags or files.
+    - Every changed line must trace to a spec requirement or scenario. If it does not, cut it.
+    - Code that works and passes its tests is not rewritten or refactored unless a spec requires it (REGLAS §9).
+    - Privacy invariants are hard constraints. Nothing leaves the device, transcripts are never stored, no telemetry and no content logs.
+  proposal:
+    - Keep scope to one package and one outcome when possible. State what is out of scope.
+    - Include a rollback plan for changes to contracts, encryption, signatures or persisted data formats.
+  specs:
+    - Use Given/When/Then scenarios and RFC 2119 keywords (MUST, SHALL, SHOULD, MAY).
+    - Frontend copy requirements follow packages/frontend/CLAUDE.md. Neutral Spanish with tuteo (never voseo), no clinical words, no emojis.
+  design:
+    - Respect ports & adapters. New inference or storage choices go through the composition roots (e.g. src/lib/llm/arranque.js).
+    - Document decisions with rationale. Reject alternatives that add surface without a requirement.
+    - Frontend UI uses only tokens from src/styles/tokens/. Black and white UI; color only for mood (--mood-up, --mood-down).
+  tasks:
+    - Group by phase with hierarchical numbering. Each task fits one session and one reviewable work unit.
+    - Pair every behavior task with its test task in the same work unit. Forecast changed lines against the 400-line budget.
+  apply:
+    tdd: true
+    test_command: pnpm test
+    notes:
+      - Follow existing patterns. Spanish WHY-comments, identifiers matching the file, colocated tests, injected dependencies.
+      - Under strict_tdd_scope.enforced, write the failing test first (RED), then minimal code (GREEN), then refactor.
+      - Never add dependencies without an explicit spec requirement.
+  verify:
+    test_command: pnpm test
+    build_command: pnpm build
+    typecheck_command: pnpm typecheck
+    coverage_threshold: 0   # no JS/Python coverage tooling installed
+    extra:
+      - Frontend changes that touch network, deps or env run pnpm --filter @nadie/frontend build before tests so the dist/ audit runs.
+      - Run test:e2e or pnpm test:backend-e2e only when the change touches those flows.
+  archive:
+    - Warn before merging destructive deltas. Never modify archived changes.
