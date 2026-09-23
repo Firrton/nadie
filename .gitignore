@@ -76,3 +76,6 @@ next-env.d.ts
 __pycache__/
 .ipynb_checkpoints/
 research/model-evaluation/results/
+
+# Local agent skill registry (regenerated per machine)
+.atl/
