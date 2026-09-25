@@ -40,11 +40,21 @@ export const HOSTS_DE_MODELO = [HF, LIBS_HOST];
    declara WebLLM en su config.ts, no de una estimación nuestra. */
 export const ESCALERA = [
   {
+    id: 'Qwen3-1.7B-q4f16_1-MLC',
+    vramMB: 2036.66,
+    lib: 'Qwen3-1.7B-q4f16_1_cs1k-webgpu.wasm',
+    peldano: 'escritorio',
+    /* Sin esto razona antes de contestar: más latencia y nada que la persona
+       necesite. Aun apagado deja un bloque <think> vacío que el adaptador saca. */
+    apagarRazonamiento: true,
+    nota: 'El elegido (24-sep, research/model-evaluation/modes): en lectura ciega doble, 49/138 respuestas correctas y 5 graves, contra 4 y 44 de la base (Qwen3.5-2B: 49 y 18); ningún medicamento; misma latencia. Apache-2.0.',
+  },
+  {
     id: 'Qwen2.5-1.5B-Instruct-q4f16_1-MLC',
     vramMB: 1629.75,
     lib: 'Qwen2-1.5B-Instruct-q4f16_1_cs1k-webgpu.wasm',
-    peldano: 'escritorio',
-    nota: 'El elegido. Único con 3/3 en extracción de memoria y 3.5x más rápido que el 1B.',
+    peldano: 'intermedio',
+    nota: 'El de antes. Mejor que el 1B, pero en crisis y en el modo límite se refugia en "no puedo ayudarte con eso".',
   },
   {
     id: 'Llama-3.2-1B-Instruct-q4f16_1-MLC',

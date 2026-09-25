@@ -492,6 +492,48 @@ describe('chat', () => {
     expect(respuesta.content).toBe(LINEA_DE_CRISIS);
   });
 
+  /* Qwen3 devuelve un bloque de razonamiento vacío aunque se le apague
+     (medido el 24-sep): llegaba a la persona y rompía el JSON de la extracción. */
+  it('limpia el bloque <think> antes de devolver la respuesta', async () => {
+    const { adaptador } = armar('<think>\n\n</think>\n\nSuena pesado. ¿Qué pasó?');
+    await adaptador.cargar();
+
+    const [respuesta] = await adaptador.puerto.chat([turno('user', 'Hoy me fue mal.')], []);
+
+    expect(respuesta.content).toBe('Suena pesado. ¿Qué pasó?');
+  });
+
+  it('una respuesta que es solo razonamiento es una respuesta vacía', async () => {
+    const { adaptador } = armar('<think>\n\n</think>\n\n');
+    await adaptador.cargar();
+
+    await expect(adaptador.puerto.chat([turno('user', 'Hoy me fue mal.')], [])).rejects.toThrow(/vacía/);
+  });
+
+  /* 0.8 es lo que recomienda Qwen y con lo que se midió el banco; sin esto,
+     cada modelo usaría el de su propia configuración (Qwen3.5-2B: 1.0). */
+  it('muestrea con top_p 0.8', async () => {
+    const { motor, adaptador } = armar('ok');
+    await adaptador.cargar();
+
+    await adaptador.puerto.chat([turno('user', 'hola')], []);
+
+    expect(motor.pedidos[0].top_p).toBe(0.8);
+  });
+
+  it('a los modelos que lo necesitan les apaga el razonamiento, y a los demás no', async () => {
+    const qwen3 = armar('ok', { modelo: 'Qwen3-1.7B-q4f16_1-MLC' });
+    const qwen25 = armar('ok', { modelo: 'Qwen2.5-1.5B-Instruct-q4f16_1-MLC' });
+    await qwen3.adaptador.cargar();
+    await qwen25.adaptador.cargar();
+
+    await qwen3.adaptador.puerto.chat([turno('user', 'hola')], []);
+    await qwen25.adaptador.puerto.chat([turno('user', 'hola')], []);
+
+    expect(qwen3.motor.pedidos[0].extra_body).toEqual({ enable_thinking: false });
+    expect(qwen25.motor.pedidos[0].extra_body).toBeUndefined();
+  });
+
   /* Revisión adversarial del 24-sep: en crisis, un error del modelo dejaba a la
      persona sin respuesta. En crisis nunca se falla en silencio. */
   it('en crisis, si el modelo falla, contesta la línea de crisis en vez de un error', async () => {
@@ -654,6 +696,17 @@ describe('chat', () => {
 describe('extract', () => {
   it('devuelve lo que el esquema de core validó, ya parseado', async () => {
     const { adaptador } = armar(CHECKIN_VALIDO);
+    await adaptador.cargar();
+
+    const salida = await adaptador.puerto.extract([{ role: 'user', content: 'hoy pesó', at: 1 }], 'checkin');
+
+    expect(salida).toEqual({ score: 7, emotions: [{ label: 'calma', intensity: 2 }] });
+  });
+
+  /* Medido con Qwen3-1.7B: 0/9 extracciones válidas porque el JSON venía
+     después de un bloque <think> vacío. */
+  it('lee el JSON aunque venga después de un bloque <think>', async () => {
+    const { adaptador } = armar('<think>\n\n</think>\n\n' + CHECKIN_VALIDO);
     await adaptador.cargar();
 
     const salida = await adaptador.puerto.extract([{ role: 'user', content: 'hoy pesó', at: 1 }], 'checkin');

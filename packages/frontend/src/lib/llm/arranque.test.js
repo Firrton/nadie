@@ -13,7 +13,7 @@ describe('arrancarIA', () => {
     });
 
     expect(modo).toBe('local');
-    expect(modelo).toBe('Qwen2.5-1.5B-Instruct-q4f16_1-MLC');
+    expect(modelo).toBe('Qwen3-1.7B-q4f16_1-MLC');
     expect(typeof adaptador.cargar).toBe('function');
   });
 

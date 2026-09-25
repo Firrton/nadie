@@ -10,7 +10,7 @@ import { armarMensajes, armarMensajesDeExtraccion } from './prompt.js';
 import { MODOS, elegirModo } from './modos.js';
 import { acompanaSeguimiento, cumpleCrisis, haceDeMedico, nombraMedicamento, prometeDeMas } from './salvaguardas.js';
 import { LINEA_DE_CRISIS, LINEA_DE_ESCUCHA, LINEA_DE_LIMITE, LINEA_DE_SEGUIMIENTO } from '../../data/content.js';
-import { MODELO_POR_DEFECTO } from './modelos.js';
+import { ESCALERA, MODELO_POR_DEFECTO } from './modelos.js';
 
 /* Adaptador de WebLLM: la implementación real del LLMPort de @nadie/core.
 
@@ -120,6 +120,16 @@ function sinCercaDeCodigo(texto) {
 const TEMPERATURA_EXTRACCION = [0, 0.4];
 const TEMPERATURA_CHAT = 0.7;
 
+/* El valor que recomienda Qwen y con el que se midió el banco (24-sep). Sin
+   pasarlo, cada modelo usa el de su propia configuración: Qwen3 0.95 y
+   Qwen3.5 1.0, que deja entrar la cola de la distribución. */
+const TOP_P_CHAT = 0.8;
+
+/* Qwen3 devuelve un bloque de razonamiento, vacío cuando se le apaga, antes de
+   la respuesta. Medido: llegaba a la persona y rompía el JSON de 9 de 9
+   extracciones. Lo que se razona no es respuesta. */
+const sinRazonamiento = (texto) => texto.replace(/<think>[\s\S]*?<\/think>/g, '');
+
 /* TECHO DE TOKENS. Sin esto, un modelo que entra en bucle genera hasta agotar el
    contexto (4096) y se lleva minutos por respuesta. Observado de verdad: con
    decodificación restringida, el 1B empezó a emitir espacios en blanco dentro
@@ -181,6 +191,11 @@ export function crearWebLLM({ crearEngine, modelo = MODELO_POR_DEFECTO, onProgre
   let motor = null;
   let enVuelo = null;
 
+  /* Qwen3 razona antes de contestar si no se le dice lo contrario: para
+     acompañar no hace falta y cuesta latencia. Lo declara cada peldaño. */
+  const peldano = ESCALERA.find((m) => m.id === modelo);
+  const extra = peldano && peldano.apagarRazonamiento ? { extra_body: { enable_thinking: false } } : {};
+
   /* Idempotente y a prueba de llamadas concurrentes: dos pantallas pidiendo
      cargar no pueden disparar dos descargas de 2 GB. */
   function cargar() {
@@ -221,20 +236,22 @@ export function crearWebLLM({ crearEngine, modelo = MODELO_POR_DEFECTO, onProgre
       activo.chat.completions.create({
         stream: false,
         messages: mensajes,
+        ...extra,
         ...opciones,
       }),
       TIMEOUT_MS,
       () => activo.interruptGenerate && activo.interruptGenerate(),
     );
 
-    const texto = respuesta && respuesta.choices && respuesta.choices[0]
+    const crudo = respuesta && respuesta.choices && respuesta.choices[0]
       ? respuesta.choices[0].message && respuesta.choices[0].message.content
       : null;
+    const texto = typeof crudo === 'string' ? sinRazonamiento(crudo).trim() : '';
 
-    if (typeof texto !== 'string' || !texto.trim()) {
+    if (!texto) {
       throw new Error('el modelo devolvió una respuesta vacía');
     }
-    return texto.trim();
+    return texto;
   }
 
   const puerto = {
@@ -268,6 +285,7 @@ export function crearWebLLM({ crearEngine, modelo = MODELO_POR_DEFECTO, onProgre
         try {
           texto = await completar(mensajes, {
             temperature: TEMPERATURA_CHAT,
+            top_p: TOP_P_CHAT,
             max_tokens: TOPE_CHAT,
           });
         } catch (e) {
