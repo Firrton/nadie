@@ -1,0 +1,18 @@
+schema: spec-driven
+project: nadie
+change: crisis-detector
+artifact_store: openspec
+execution_mode: interactive
+delivery_strategy: ask-on-risk
+status: active
+phases:
+  init: bootstrapped
+  explore: complete
+  proposal: complete
+  spec: pending
+  design: pending
+  tasks: pending
+  apply: pending
+  verify: pending
+  archive: pending
+next: spec-and-design

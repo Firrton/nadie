@@ -1,0 +1,100 @@
+[
+ {
+  "title": "Suicide attempts already in progress, method statements and past self-harm still route to 'escuchar'",
+  "file": "packages/frontend/src/lib/llm/modos.js",
+  "severity": "high",
+  "scenario": "The user writes 'Me tomé todas mis pastillas' (an overdose already taken). elegirModo returns 'escuchar', so the model gets the plain listening prompt and cumpleCrisis never runs. The same happens with 'Me corté los brazos anoche', 'Me quiero tirar del puente', 'Me quiero colgar', 'Esta noche me mat",
+  "fix": "Add past-tense and in-progress forms: 'me tome (todas|un frasco|el frasco|toda la caja)', 'me (corte|estoy cortando|quiero cortar)', 'lastime a proposito'. Add method verbs: '(tirarme|aventarme|colgarme|me quiero (tirar|aventar|colgar))' followed by "
+ },
+ {
+  "title": "The new crisis signals lock ordinary venting into crisis mode for the rest of the session",
+  "file": "packages/frontend/src/lib/llm/modos.js",
+  "severity": "medium",
+  "scenario": "The user writes 'Cuando no esté tan cansada voy a hablar con mi jefe.' Line 59 matches 'cuando no este'. Because esCrisis checks every user turn, all later turns are crisis too: after 'Gracias, ya me siento mejor' and '¿Me ayudas a pensar a dónde ir?', elegirModo still returns 'crisis'. Every reply ",
+  "fix": "Anchor each warning-sign pattern to its object and end. 'cuando (yo )?(ya )?no (este|estemos)' should require the clause to end there: (?=\\s*[.,!?]|$) or '...no este (yo|mas|aqui)'. 'tomarmelas' should require 'todas' or intent ('pensando en|voy a|qu"
+ },
+ {
+  "title": "Hyperbole gaps: conjugated 'me mato de risa' and 'me voy a matar a estudiar' trigger crisis",
+  "file": "packages/frontend/src/lib/llm/modos.js",
+  "severity": "low",
+  "scenario": "The user writes 'Cuando veo esos memes me mato de risa'. HIPERBOLES only strips the infinitive 'matar(me)? de'. Line 31 then matches 'cuando ... me mato' and the whole session is locked into crisis. The same happens with 'Si me mato trabajando toda la semana, merezco descansar', 'Mañana me voy a mat",
+  "fix": "Extend HIPERBOLES to conjugated forms: '(me )?(muero|mato|morir(me)?|matar(me)?) de (la |el |lo )?(...)'. Add the same activity allowlist to line 31 (me mato (estudiando|trabajando|...)). Allow 'a (estudiar|trabajar|entrenar)' and 'en el (gym|gimnasi"
+ },
+ {
+  "title": "Typed-message variants (double space, texting spellings) evade every crisis pattern",
+  "file": "packages/frontend/src/lib/llm/salvaguardas.js",
+  "severity": "medium",
+  "scenario": "On a phone the user types 'me quiero  morir' (two spaces), 'me qiero morir' or 'ya no kiero vivir'. elegirModo returns 'escuchar' because normalizar only lowercases and strips accents, and every signal uses literal single spaces.",
+  "fix": "In normalizar, collapse whitespace (.replace(/\\s+/g,' ')) and squeeze repeated letters (.replace(/(\\w)\\1{2,}/g,'$1')). For crisis matching, also map common texting spellings (k/q -> qu, 'xq') before matching. Add the four inputs as crisis tests."
+ },
+ {
+  "title": "The medication-change pattern needs no question, so declarative venting about treatment goes to LIMITE",
+  "file": "packages/frontend/src/lib/llm/modos.js",
+  "severity": "medium",
+  "scenario": "The user vents 'Ayer me volvieron a cambiar la medicación y no dormí nada'. elegirModo returns 'limite', so the model is told the person asked a health question and replies with the 'eso lo tiene que ver alguien de salud' script. After a failed check the reply is LINEA_DE_LIMITE ('De medicamentos y ",
+  "fix": "Keep only first-person intent forms in PIDE_SALUD ('(quiero|voy a|puedo|deberia) (dejar|subir|bajar|...) (la|mi|mis) ...' or '¿...dejo/subo...?'). Move the bare verb form to PREGUNTA_SALUD, and require the question mark in the same sentence as the ma"
+ },
+ {
+  "title": "The new 'un te' substance pattern matches 'un te quiero': reflective replies get swapped for the medication line",
+  "file": "packages/frontend/src/lib/llm/salvaguardas.js",
+  "severity": "medium",
+  "scenario": "In a normal escuchar conversation ('mi papá nunca me dijo que me quería'), the model replies 'Suena a que necesitabas escuchar un te quiero. ¿Qué te hubiera gustado que te dijera?'. nombraMedicamento returns true. If the retry does it again, the person gets LINEA_DE_LIMITE ('De medicamentos y remedi",
+  "fix": "Add a negative lookahead to the pattern: 'un te(?! (quiero|amo|extrano|odio|lo|la|dije|digo))'. Or only flag 'un te' next to a remedy verb (tomar|preparar|tomarte|prepararte). Add 'un te quiero' regression tests on both the user side and the reply si"
+ },
+ {
+  "title": "haceDeMedico flags the model's own refusals ('No puedo recomendarte', 'No soy doctor') as acting like a doctor",
+  "file": "packages/frontend/src/lib/llm/salvaguardas.js",
+  "severity": "low",
+  "scenario": "In LIMITE mode the model gives the ideal answer 'No puedo recomendarte medicamentos, eso lo decide tu psiquiatra. ¿Cómo te has sentido con el cambio?'. haceDeMedico returns true because of the bare 'recomendarte' and 'soy doctor', so the model's refusals never get through and LINEA_DE_LIMITE is alwa",
+  "fix": "Add a negative lookbehind for negation: (?<!no (puedo|soy|voy a) ) before 'recomendarte', 'soy (tu )?medico' and 'soy doctor'. In DIAGNOSTICA, drop the bare 'tienes' and 'parece que', or require a diagnostic noun frame ('un trastorno', 'un cuadro', '"
+ },
+ {
+  "title": "PIDE_SALUD claims voseo support but misses 'recomendame' and 'recomendás'; drug-interaction questions stay in escuchar",
+  "file": "packages/frontend/src/lib/llm/modos.js",
+  "severity": "low",
+  "scenario": "An Argentine user asks 'Recomendame algo para dormir' or '¿Qué me recomendás tomar para dormir?'. elegirModo returns 'escuchar', so the model is not told to hold the limit and answers under the listening prompt. Only the output check on named substances guards it. '¿Es peligroso mezclar pastillas co",
+  "fix": "Add 'recomendame|recomendas|me recomendas' to the imperative list and to line 94. Add a pattern like '(algo|que) (me )?(recomend\\w*|tomo|tomar) para (dormir|la ansiedad|los nervios)' and a pattern for mezclar/combinar with alcohol. Add voseo cases to"
+ },
+ {
+  "title": "A reported overdose in the past tense is not treated as a crisis, so the crisis check never runs",
+  "file": "packages/frontend/src/lib/llm/modos.js",
+  "severity": "high",
+  "scenario": "The user writes 'Me tomé 20 pastillas de clonazepam' and elegirModo returns 'escuchar'. 'Me tomé una caja de pastillas, ¿qué hago?' returns 'pensar'. In both cases chat() uses the listening or thinking prompt. cumpleCrisis never runs and LINEA_DE_CRISIS is never used. An overdose the person says alr",
+  "fix": "Add crisis signals for completed ingestion, e.g. /\\bme (tome|trague|bebi)\\b[^.?!]{0,30}\\b(\\d+|una caja|un frasco|un blister|todas?|muchas?)\\b[^.?!]{0,20}\\b(pastillas|pildoras|capsulas|comprimidos|tabletas)\\b/ and /\\bme (tome|trague) (todas|todo el fr"
+ },
+ {
+  "title": "LIMITE rejects correct refusals, then answers a diagnosis question with the medication line",
+  "file": "packages/frontend/src/lib/llm/webllm.js",
+  "severity": "low",
+  "scenario": "The user asks '¿Crees que tengo depresión?' (mode limite). The model answers correctly both times with 'No puedo decirte si tienes depresión…', '…como médico o psicólogo…' or 'No puedo recomendarte medicamentos…'. haceDeMedico flags every one of these, so both attempts fail. The person asked about d",
+  "fix": "Skip DIAGNOSTICA matches that come right after 'si ', 'no puedo decirte si', 'saber si' or 'crees que'. Require 'como (tu )?medico' to not be followed by ' o '. Match only 'recomendarte' not preceded by 'no (puedo|voy a) '. Also make the LIMITE fallb"
+ },
+ {
+  "title": "Crisis mode never ends, so a person who says they are safe gets the same canned line asking whether they are safe",
+  "file": "packages/frontend/src/lib/llm/webllm.js",
+  "severity": "medium",
+  "scenario": "Turn 1: 'Me quiero morir' gets LINEA_DE_CRISIS. Turn 2: 'Sí, estoy a salvo. Ya hablé con mi hermana y está conmigo. Gracias.' elegirModo still returns crisis because it looks at every turn. Every reply must now ask about safety and point to human help without a condition. A natural follow-up ('Qué b",
+  "fix": "Apply the strict cumpleCrisis check and the fixed line only when the crisis signal is in the latest user turn. For later turns, use a softer check, e.g. no minimizing, no phone numbers, no stating that the person is safe, and help is mentioned somewh"
+ },
+ {
+  "title": "The dose check has no echo exemption, so in crisis a reply urging emergency care after an overdose is replaced",
+  "file": "packages/frontend/src/lib/llm/salvaguardas.js",
+  "severity": "low",
+  "scenario": "The user writes 'Me tomé 20 pastillas y ya no quiero vivir' (crisis). The model replies 'Si tomaste 20 pastillas necesitas ayuda ya: llama a emergencias o pide a alguien de confianza que te lleve. ¿Estás a salvo en este momento?'. This reply passes cumpleCrisis. nombraMedicamento still returns true ",
+  "fix": "Let a dose match through when the exact dose string also appears in dicho (the same word-bounded echo rule used for names), at least in CRISIS mode. Or add 'emergencias' to the crisis line for ingestion signals."
+ },
+ {
+  "title": "When a session ends on an assistant turn and the last user message is long, extraction drops the user's words",
+  "file": "packages/frontend/src/lib/llm/prompt.js",
+  "severity": "low",
+  "scenario": "The user sends a long final message (about 8,800 or more characters, e.g. a pasted letter), Nadie replies, and the session closes. extract(memory/checkin/share-summary) builds its transcript with recortar. The window contains only Nadie's final reply, because the user turn does not fit and the 'star",
+  "fix": "In recortar, make sure the last user turn is always included, truncated to the budget if needed, rather than only the last message. Alternatively, trim extraction transcripts so they end on the last user turn."
+ },
+ {
+  "title": "A single oversized user message is never truncated, so the turn throws a context overflow outside crisis mode",
+  "file": "packages/frontend/src/lib/llm/prompt.js",
+  "severity": "low",
+  "scenario": "The user pastes a 15,000-character text. recortar keeps the last message whole ('aunque solo él se pase'). WebLLM 0.2.85 throws ContextWindowSizeExceededError when prompt tokens exceed the 4096 window. completar rejects and, in escuchar, pensar and limite, chat() rethrows, so the turn errors instead",
+  "fix": "Truncate the last message to PRESUPUESTO_HISTORIAL characters and keep its tail, which is where the latest content is. Then no single message can exceed the budget. Add a test with a 20k-character message."
+ }
+]

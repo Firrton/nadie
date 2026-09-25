@@ -147,20 +147,25 @@ def validate_assets() -> dict[str, Any]:
 
 
 JS_PROMPT_COMPONENTS = r"""
-import { SISTEMA, armarMensajes } from './packages/frontend/src/lib/llm/prompt.js';
+import { armarMensajes } from './packages/frontend/src/lib/llm/prompt.js';
 import { EJEMPLOS_CONVERSACION } from './packages/frontend/src/data/content.js';
 
 const payload = JSON.parse(process.env.NADIE_PAYLOAD);
 const stack = armarMensajes(payload.messages, payload.memory);
-const fewshotCount = EJEMPLOS_CONVERSACION.length * 2;
+// prompt.js manda solo el ejemplo del modo del turno: se cuentan los que llegaron.
+const ejemplos = new Set(EJEMPLOS_CONVERSACION.flatMap((e) => [e.user, e.assistant]));
+let fewshotCount = 0;
+while (1 + fewshotCount < stack.length && ejemplos.has(stack[1 + fewshotCount].content)) fewshotCount += 1;
+// El prompt del modo que eligió prompt.js para este caso, sin la memoria.
+const base = armarMensajes(payload.messages, [])[0].content;
 let system = stack[0].content;
 if (payload.systemOverride) {
-  system = system.startsWith(SISTEMA)
-    ? payload.systemOverride + system.slice(SISTEMA.length)
+  system = system.startsWith(base)
+    ? payload.systemOverride + system.slice(base.length)
     : payload.systemOverride;
 }
 console.log(JSON.stringify({
-  systemBase: payload.systemOverride || SISTEMA,
+  systemBase: payload.systemOverride || base,
   system: { role: 'system', content: system },
   fewshot: payload.includeFewshot ? stack.slice(1, 1 + fewshotCount) : [],
   history: stack.slice(1 + fewshotCount),

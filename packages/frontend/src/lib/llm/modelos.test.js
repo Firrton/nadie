@@ -34,10 +34,19 @@ describe('la escalera', () => {
     expect(MODELO_POR_DEFECTO).toBe(ESCALERA[0].id);
   });
 
-  /* El por defecto lo decidió una MEDICIÓN, no una tabla de tamaños: el 1.5B fue
-     el único con 3/3 en extracción de memoria y 3.5x más rápido que el 1B. */
+  /* El por defecto lo decide una MEDICIÓN, no una tabla de tamaños. El 24-sep,
+     con los prompts por modo, en WebLLM real y lectura ciega doble de 138
+     respuestas por modelo, Qwen3-1.7B tuvo 5 respuestas graves contra 18 de
+     Qwen3.5-2B y 44 de la base, sin medicamentos y con la misma latencia
+     (research/model-evaluation/modes). */
   it('el por defecto es el que ganó el banco', () => {
-    expect(MODELO_POR_DEFECTO).toBe('Qwen2.5-1.5B-Instruct-q4f16_1-MLC');
+    expect(MODELO_POR_DEFECTO).toBe('Qwen3-1.7B-q4f16_1-MLC');
+  });
+
+  /* El 1.5B deja de ser el por defecto pero sigue siendo mejor que el 1B: es el
+     peldaño para equipos donde el 1.7B no entra. */
+  it('entre el por defecto y el de celular queda un peldaño intermedio', () => {
+    expect(escaleraQueEntra(capacidad(2000)).map((m) => m.peldano)).toEqual(['intermedio', 'celular']);
   });
 
   /* Poner un modelo sin medir en producción es exactamente lo que el banco existe
