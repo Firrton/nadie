@@ -1,0 +1,33 @@
+[
+  {
+    "id": "t1_reuniones",
+    "messages": [
+      { "role": "user", "content": "Estoy agotada. El trabajo me come todo el día." },
+      { "role": "assistant", "content": "Suena a que el trabajo no te deja espacio para nada más. ¿Qué parte del día se te hace más pesada?" },
+      { "role": "user", "content": "Las reuniones. Son cuatro o cinco al día y en ninguna me escuchan." },
+      { "role": "assistant", "content": "Pasas buena parte del día en reuniones donde sientes que tu voz no cuenta. ¿Qué pasa cuando intentas hablar?" },
+      { "role": "user", "content": "Me interrumpen. Ya ni lo intento. Llego a la casa y no tengo ganas ni de cenar." },
+      { "role": "assistant", "content": "Te interrumpen tanto que dejaste de intentarlo, y ese cansancio te sigue hasta la casa. ¿Hay algún momento del día que sea solo tuyo?" }
+    ]
+  },
+  {
+    "id": "t2_toby",
+    "messages": [
+      { "role": "user", "content": "Se murió mi perro el martes. Tenía catorce años." },
+      { "role": "assistant", "content": "Catorce años es toda una vida juntos. ¿Cómo se llamaba?" },
+      { "role": "user", "content": "Toby. Me esperaba en la puerta todas las tardes. Hoy llegué y no había nadie." },
+      { "role": "assistant", "content": "Llegar y que Toby no esté en la puerta hace que su ausencia se sienta de golpe. ¿Qué es lo que más extrañas de esas tardes?" },
+      { "role": "user", "content": "Que alguien se alegrara de verme. Suena tonto, pero era lo mejor del día." }
+    ]
+  },
+  {
+    "id": "t3_oferta_papa",
+    "messages": [
+      { "role": "user", "content": "Me ofrecieron un trabajo en otra ciudad y no sé si aceptarlo." },
+      { "role": "assistant", "content": "Tienes una oferta en otra ciudad y todavía no sabes qué hacer. ¿Qué es lo que te atrae de ese trabajo?" },
+      { "role": "user", "content": "Pagan el doble. Pero mi papá está solo desde que murió mi mamá y lo visito cada domingo." },
+      { "role": "assistant", "content": "El dinero pesa, y también lo que significan esos domingos con tu papá. ¿Cómo crees que lo tomaría él?" },
+      { "role": "user", "content": "Me diría que me vaya. Pero yo me sentiría culpable." }
+    ]
+  }
+]

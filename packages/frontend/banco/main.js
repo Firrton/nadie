@@ -201,8 +201,14 @@ export function appConfigLocal(modeloId, base = BASE_LOCAL) {
    Descubrir que falta un shard a los diez minutos de carga es la peor forma
    posible de enterarse. */
 window.verificarLocal = async function verificarLocal(modeloId, base = BASE_LOCAL) {
-  const url = base + '/' + modeloId + '/resolve/main/ndarray-cache.json';
-  const r = await fetch(url);
+  /* WebLLM 0.2.85 lee `tensor-cache.json`; las conversiones viejas traen
+     además `ndarray-cache.json` y las nuevas (Qwen3.5) solo el primero. */
+  let url = base + '/' + modeloId + '/resolve/main/tensor-cache.json';
+  let r = await fetch(url);
+  if (!r.ok) {
+    url = base + '/' + modeloId + '/resolve/main/ndarray-cache.json';
+    r = await fetch(url);
+  }
   if (!r.ok) return { listo: false, motivo: 'no responde ' + url + ' (' + r.status + ')' };
 
   const cache = await r.json();
@@ -257,6 +263,79 @@ window.correr = async function correr(modeloId, appConfig) {
   estado.textContent = window.__progreso;
   return 'listo';
 };
+
+/* ESCENARIOS: una respuesta del puerto REAL por llamada, para el corredor
+   headless (banco/escenarios.mjs). Mide lo mismo que recibe la persona —prompt,
+   modos, salvaguardas y reintentos incluidos— y además registra cada pedido al
+   motor en crudo: qué prompt se usó y qué salió antes de las salvaguardas.
+
+   `extra` existe solo para comparar: se mezcla en cada pedido al motor (por
+   ejemplo `top_p`, o `extra_body.enable_thinking: false` para Qwen3) sin
+   tocar el adaptador de producción. */
+let adaptadorDeEscenarios = null;
+const pedidos = [];
+
+function conRegistro(motor, extra) {
+  return new Proxy(motor, {
+    get(objetivo, prop) {
+      if (prop === 'chat') {
+        return {
+          completions: {
+            create: async (pedido) => {
+              const t0 = performance.now();
+              const conExtra = extra ? { ...pedido, ...extra } : pedido;
+              const r = await objetivo.chat.completions.create(conExtra);
+              pedidos.push({
+                mensajes: pedido.messages,
+                temperature: pedido.temperature,
+                texto: r.choices?.[0]?.message?.content ?? '',
+                usage: r.usage ?? null,
+                ms: Math.round(performance.now() - t0),
+              });
+              return r;
+            },
+          },
+        };
+      }
+      const valor = Reflect.get(objetivo, prop);
+      return typeof valor === 'function' ? valor.bind(objetivo) : valor;
+    },
+  });
+}
+
+window.cargarModelo = async function cargarModelo(modeloId, { base = BASE_LOCAL, extra = null } = {}) {
+  const chequeo = await window.verificarLocal(modeloId, base);
+  if (!chequeo.listo) throw new Error('el modelo local no está completo: ' + JSON.stringify(chequeo));
+
+  const appConfig = appConfigLocal(modeloId, base);
+  adaptadorDeEscenarios = crearWebLLM({
+    crearEngine: async (m, o) => conRegistro(await crearEngineWebLLM(m, { ...o, appConfig }), extra),
+    modelo: modeloId,
+  });
+  const t0 = performance.now();
+  await adaptadorDeEscenarios.cargar();
+  return { msCarga: Math.round(performance.now() - t0), capacidad: window.__capacidad };
+};
+
+async function medir(llamada) {
+  pedidos.length = 0;
+  const t0 = performance.now();
+  try {
+    const salida = await llamada();
+    return { salida, pedidos: [...pedidos], ms: Math.round(performance.now() - t0), error: null };
+  } catch (e) {
+    return { salida: null, pedidos: [...pedidos], ms: Math.round(performance.now() - t0), error: String(e.message) };
+  }
+}
+
+window.responder = (mensajes) =>
+  medir(async () => {
+    const [respuesta] = await adaptadorDeEscenarios.puerto.chat(mensajes.map((m) => ({ ...m, at: 1 })), []);
+    return respuesta.content;
+  });
+
+window.extraer = (transcripcion, esquema) =>
+  medir(() => adaptadorDeEscenarios.puerto.extract(transcripcion.map((m) => ({ ...m, at: 1 })), esquema));
 
 /* Validación al pasar: qué elegiría la política real en ESTE equipo. */
 window.__capacidad = await medirCapacidad();
