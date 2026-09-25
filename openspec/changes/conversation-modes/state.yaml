@@ -1,0 +1,18 @@
+schema: spec-driven
+project: nadie
+change: conversation-modes
+artifact_store: openspec
+execution_mode: auto
+delivery_strategy: ask-on-risk
+status: active
+phases:
+  init: bootstrapped
+  explore: complete
+  proposal: complete
+  spec: complete
+  design: complete
+  tasks: complete
+  apply: complete
+  verify: complete
+  archive: pending
+next: clinical-review-then-archive
