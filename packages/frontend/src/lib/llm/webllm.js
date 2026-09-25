@@ -7,6 +7,9 @@ import {
 import { z } from 'zod';
 import { ahoraEnSegundos } from './messages.js';
 import { armarMensajes, armarMensajesDeExtraccion } from './prompt.js';
+import { MODOS, elegirModo } from './modos.js';
+import { acompanaSeguimiento, cumpleCrisis, haceDeMedico, nombraMedicamento, prometeDeMas } from './salvaguardas.js';
+import { LINEA_DE_CRISIS, LINEA_DE_ESCUCHA, LINEA_DE_LIMITE, LINEA_DE_SEGUIMIENTO } from '../../data/content.js';
 import { MODELO_POR_DEFECTO } from './modelos.js';
 
 /* Adaptador de WebLLM: la implementación real del LLMPort de @nadie/core.
@@ -152,10 +155,19 @@ const TOPE_EXTRACCION = 600;
    dejar a la persona mirando un orbe que piensa sin fin es peor. */
 const TIMEOUT_MS = 45000;
 
-function conTimeout(promesa, ms = TIMEOUT_MS) {
+/* Al vencer se interrumpe la generación: si siguiera, WebLLM quedaría tomado y
+   el turno siguiente también vencería esperando el mismo lock. */
+function conTimeout(promesa, ms = TIMEOUT_MS, alVencer = () => {}) {
   let reloj;
   const limite = new Promise((_, rechazar) => {
-    reloj = setTimeout(() => rechazar(new Error('el modelo no respondió en ' + Math.round(ms / 1000) + 's')), ms);
+    reloj = setTimeout(() => {
+      try {
+        alVencer();
+      } catch (e) {
+        /* Interrumpir es lo mejor que se puede hacer; no cambia el error. */
+      }
+      rechazar(new Error('el modelo no respondió en ' + Math.round(ms / 1000) + 's'));
+    }, ms);
   });
   return Promise.race([promesa, limite]).finally(() => clearTimeout(reloj));
 }
@@ -204,12 +216,15 @@ export function crearWebLLM({ crearEngine, modelo = MODELO_POR_DEFECTO, onProgre
   }
 
   async function completar(mensajes, opciones) {
+    const activo = exigirMotor();
     const respuesta = await conTimeout(
-      exigirMotor().chat.completions.create({
+      activo.chat.completions.create({
         stream: false,
         messages: mensajes,
         ...opciones,
       }),
+      TIMEOUT_MS,
+      () => activo.interruptGenerate && activo.interruptGenerate(),
     );
 
     const texto = respuesta && respuesta.choices && respuesta.choices[0]
@@ -227,11 +242,51 @@ export function crearWebLLM({ crearEngine, modelo = MODELO_POR_DEFECTO, onProgre
        la testea; si este adaptador eligiera distinto, quien agregue el resultado
        al historial duplicaría toda la conversación anterior, en silencio. */
     async chat(messages, context) {
-      const texto = await completar(armarMensajes(messages, context), {
-        temperature: TEMPERATURA_CHAT,
-        max_tokens: TOPE_CHAT,
-      });
-      return [{ role: 'assistant', content: texto, at: ahoraEnSegundos() }];
+      const modo = elegirModo(messages);
+      const mensajes = armarMensajes(messages, context, modo);
+      const dicho = (messages || []).filter((m) => m.role === 'user').map((m) => m.content).join('\n');
+
+      /* Lo que no puede fallar se verifica acá, sobre lo generado, y no se pide
+         por favor en el prompt (salvaguardas.js): nunca un medicamento, y en
+         crisis, preguntar si está a salvo y apuntar a ayuda humana. Una
+         respuesta que no cumple se pide de nuevo UNA vez; si vuelve a fallar,
+         la persona recibe una línea fija en vez del modelo. */
+      /* En crisis, lo estricto va mientras la persona no diga que está a salvo
+         (modos.js la pasa a seguimiento cuando lo dice): "no, no estoy a salvo"
+         no puede recibir una respuesta común. En seguimiento no se le repite la
+         pregunta, pero nunca se minimiza. Y en ningún modo se promete de más. */
+      const enCrisis = modo === MODOS.CRISIS;
+      const cumple = (texto) =>
+        !nombraMedicamento(texto, dicho, { dosisDicha: enCrisis || modo === MODOS.SEGUIMIENTO })
+        && !prometeDeMas(texto)
+        && (!enCrisis || cumpleCrisis(texto))
+        && (modo !== MODOS.SEGUIMIENTO || acompanaSeguimiento(texto))
+        && (modo !== MODOS.LIMITE || !haceDeMedico(texto));
+
+      for (let intento = 0; intento < 2; intento++) {
+        let texto;
+        try {
+          texto = await completar(mensajes, {
+            temperature: TEMPERATURA_CHAT,
+            max_tokens: TOPE_CHAT,
+          });
+        } catch (e) {
+          /* En crisis nunca se falla en silencio: si el modelo no responde, la
+             persona recibe la línea de crisis (revisión adversarial, 24-sep). */
+          if (enCrisis || modo === MODOS.SEGUIMIENTO) break;
+          throw e;
+        }
+        if (cumple(texto)) {
+          return [{ role: 'assistant', content: texto, at: ahoraEnSegundos() }];
+        }
+      }
+      const LINEAS = {
+        [MODOS.CRISIS]: LINEA_DE_CRISIS,
+        [MODOS.SEGUIMIENTO]: LINEA_DE_SEGUIMIENTO,
+        [MODOS.LIMITE]: LINEA_DE_LIMITE,
+      };
+      const linea = LINEAS[modo] ?? LINEA_DE_ESCUCHA;
+      return [{ role: 'assistant', content: linea, at: ahoraEnSegundos() }];
     },
 
     /* REGLAS §5: la salida del modelo se valida contra el esquema; si no valida,

@@ -23,8 +23,28 @@ class EvaluationHarnessTest(unittest.TestCase):
         components = harness.prompt_components(case, experiment)
 
         self.assertIn(case["memory"][0], components["system"]["content"])
-        self.assertEqual(len(components["fewshot"]), 4)
+        # Con modos (prompt.js) va solo el par de ejemplo del modo del turno.
+        self.assertEqual(len(components["fewshot"]), 2)
         self.assertEqual(components["history"], case["messages"])
+
+    def test_system_base_is_the_prompt_of_the_chosen_mode(self):
+        # Con modos, un pedido explícito usa el prompt de pensar: la corrida no
+        # puede registrar el de escuchar como si fuera el medido.
+        case = next(
+            item
+            for item in harness.load_scenarios("full")
+            if item["id"] == "advice_requested"
+        )
+        experiment = next(
+            item
+            for item in harness.load_experiments("full")
+            if item["id"] == "system_only"
+        )
+
+        components = harness.prompt_components(case, experiment)
+
+        self.assertIn("te pidió ayuda para pensar", components["systemBase"])
+        self.assertTrue(components["system"]["content"].startswith(components["systemBase"]))
 
     def test_safe_boundary_language_is_not_marked_as_a_claim(self):
         scored = harness.score_row(

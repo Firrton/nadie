@@ -26,18 +26,42 @@ export const DEMO_REPLIES = [
   'Para eso está este espacio. Lo dijiste, y ya no está solo en tu cabeza. Cuando quieras cerrar, aquí sigo.',
 ];
 
-/* Dos situaciones distintas para enseñarle al modelo cuándo escuchar y cuándo
-   ayudar a pensar. Son pares independientes, no un guion para la interfaz. */
+/* Un ejemplo por modo: escuchar sin resolver, y ayudar a pensar cuando la
+   persona lo pide. Al modelo le llega SOLO el del modo del turno (prompt.js).
+   Son pares independientes, no un guion para la interfaz. */
 export const EJEMPLOS_CONVERSACION = [
   {
+    modo: 'escuchar',
     user: 'Mi jefe me corrigió delante de todos. No fue la corrección: fue que mis compañeros evitaron mirarme y ahora pienso que creen que soy incompetente. No quiero un plan, solo necesitaba decirlo.',
     assistant: 'Lo que te quedó dando vueltas no fue la corrección, sino lo que interpretaste en las miradas de tus compañeros. Que evitaran mirarte puede significar muchas cosas; ¿qué pasó justo después que te hizo pensar en incompetencia?',
   },
   {
+    modo: 'pensar',
     user: 'Me ofrecieron un trabajo que paga mejor, pero tendría que mudarme lejos de mi mamá. La plata me aliviaría, aunque me da culpa irme ahora que ella está sola. ¿Me ayudas a pensarlo?',
     assistant: 'Estás tratando de cuidar tu estabilidad económica y la cercanía con tu mamá. Podrías comparar cuánto cambiaría tu vida el nuevo ingreso, qué apoyo necesita ella y cómo podrías acompañarla si te mudaras. ¿Cuál de esas dos pérdidas te pesaría más?',
   },
 ];
+
+/* Lo que recibe la persona si el modelo falla dos veces lo que no puede fallar
+   (salvaguardas.js): en el modo límite, el límite; en los demás, una pregunta
+   neutra. A quien no preguntó por medicamentos no se le habla de medicamentos
+   (revisión del 25-sep). */
+export const LINEA_DE_LIMITE =
+  'Eso lo tiene que ver alguien de salud, como un médico o un psicólogo. ¿Qué te está pasando que te hizo preguntarlo?';
+
+export const LINEA_DE_ESCUCHA = 'Cuéntame un poco más. ¿Qué es lo que más te está pesando ahora?';
+
+/* Después de una crisis, cuando la persona dijo que está a salvo. PENDIENTE de
+   revisión clínica, como LINEA_DE_CRISIS. */
+export const LINEA_DE_SEGUIMIENTO =
+  'Me alegra que estés a salvo ahora. ¿Cómo te sientes en este momento? Si vuelves a sentirte en peligro, busca ayuda de inmediato con alguien de confianza o una línea de ayuda de tu país.';
+
+/* Lo que recibe la persona si, en crisis, el modelo no pregunta si está a salvo
+   o no apunta a ayuda humana dos veces seguidas (salvaguardas.js). Sin números:
+   no se sabe el país. PENDIENTE de revisión clínica antes de salir a personas
+   reales, igual que las señales de modos.js. */
+export const LINEA_DE_CRISIS =
+  'Lo que me cuentas es importante y mereces apoyo ahora mismo. ¿Estás a salvo en este momento? Te pido que hables ya con alguien de confianza o que llames a una línea de ayuda de tu país.';
 
 /* Frases para la espera de la primera carga del modelo.
 
